@@ -1,0 +1,21 @@
+games: list
+
+game
+    name
+    players: list
+player
+    user
+    cards: hash {red: 2, yellow: 4, green: 3, blue: 0}
+    hand: same structure as cards
+card - just a string? (yellow, red, purple, green, blue, ninja)
+move
+    from: player_id
+    to: player_id
+    color: string (yellow, red, purple, green, blue)
+    type?: string (add, transfer, attack, ninja)
+user
+    name
+    password_hash
+
+flask redirect function sends out html
+solutions: flask-restful? return {}, 301, {'Location': url_for(...)}
