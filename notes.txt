@@ -12,10 +12,28 @@ move
     from: player_id
     to: player_id
     color: string (yellow, red, purple, green, blue)
-    type?: string (add, transfer, attack, ninja)
+
+    {
+        'first':
+            { 'type': 'deploy', 'to': 2, 'color': 'red' },
+                OR
+            { 'type': 'ninja', 'to': 2, 'color': 'red' },
+
+        'second':
+            { 'type': 'transfer', 'from': 1, 'to':  2, 'color': 'red' },
+                OR
+            { 'type': 'add', 'color': 'red' },
+
+        'third':
+            { 'type': 'attack', 'to': 2, 'color': 'red' } // from_color??
+                OR
+            null
+    ]
 user
     name
     password_hash
 
 flask redirect function sends out html
 solutions: flask-restful? return {}, 301, {'Location': url_for(...)}
+
+refactor move functions as Move class?

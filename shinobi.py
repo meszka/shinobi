@@ -57,12 +57,64 @@ class Player(MethodView):
         redis.delete('games:{}:players:{}:cards'.format(gid, pid))
         return ''
 
+class MoveList(MethodView):
+    def post(self, gid, pid):
+        move = request.get_json()
+        valid, errors = validate_move(gid, pid, move)
+        if valid:
+            messages = execute_move(gid, pid, move)
+            return jsonify({'messages': messages})
+        else:
+            return jsonify({'errors': errors})
+
+def validate_move(gid, pid, move):
+    return True, []
+
+def execute_move(gid, pid, move):
+    orders = (move['first'], move['second'], move['third'])
+    messages = []
+    for order in orders:
+        messages.append(execute_order(gid, pid, order))
+    return messages
+
+def execute_order(gid, pid, order):
+    if order:
+        if order['type'] == 'deploy':
+            return deploy(gid, pid, order['color'], order['to'])
+        elif order['type'] == 'ninja':
+            return ninja(gid, pid, order['color'], order['to'])
+        elif order['type'] == 'transfer':
+            return transfer(gid, pid, order['color'], order['from'], order['to'])
+        elif order['type'] == 'attack':
+            return attack(gid, pid, order['color'], order['to'])
+
+def deploy(gid, pid, color, to_pid):
+    redis.hincrby('games:{}:players:{}:hand'.format(gid, pid), color, -1)
+    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, 1)
+    return 'deployed {} to {}'.format(color, to_pid)
+
+def ninja(gid, pid, color, to_pid):
+    redis.hincrby('games:{}:players:{}:hand'.format(gid, pid), 'ninja', -1)
+    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, -1)
+    return 'killed {} in {}'.format(color, to_pid)
+
+def tranfer(gid, pid, color, from_pid, to_pid):
+    redis.hincrby('games:{}:players:{}:cards'.format(gid, from_pid), color, -1)
+    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, 1)
+    return 'transfered {} from {} to {}'.format(color, from_pid, to_pid)
+
+def attack(gid, pid, color, to_pid):
+    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, -1)
+    return 'attacked {} in {}'.format(color, to_pid)
+
 app.add_url_rule('/games', view_func=GameList.as_view('game_list'))
 app.add_url_rule('/games/<int:gid>', view_func=Game.as_view('game'))
 app.add_url_rule('/games/<int:gid>/players',
                  view_func=PlayerList.as_view('player_list'))
 app.add_url_rule('/games/<int:gid>/players/<int:pid>',
                  view_func=Player.as_view('player'))
+app.add_url_rule('/games/<int:gid>/players/<int:pid>/moves',
+                 view_func=MoveList.as_view('move_list'))
 
 if __name__ == '__main__':
     app.run(debug=True)
