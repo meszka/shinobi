@@ -46,7 +46,7 @@ class Game:
             player.set_color(colors.pop())
             player.draw_cards()
 
-    def init_deck(gid):
+    def init_deck(self):
         deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
         random.shuffle(deck)
         for card in deck:
