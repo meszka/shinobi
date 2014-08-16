@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 redis = redis.StrictRedis(decode_responses=True)
 
-class GameList(MethodView):
+class GameListView(MethodView):
     def get(self):
         gids = redis.lrange('games', 0, -1)
         games = []
@@ -24,7 +24,7 @@ class GameList(MethodView):
         redis.hset('games:{}'.format(gid), 'name', game['name'])
         return redirect(url_for('game', gid=gid))
 
-class Game(MethodView):
+class GameView(MethodView):
     def get(self, gid):
         name = redis.hget('games:{}'.format(gid), 'name')
         return jsonify({'gid': gid, 'name': name})
@@ -40,9 +40,10 @@ class Game(MethodView):
         redis.delete('games:{}'.format(gid))
         return ''
 
-class PlayerList(MethodView):
+class PlayerListView(MethodView):
     def get(self, gid):
-        pids = get_players(gid)
+        game = Game(gid)
+        pids = game.get_pids()
         players = [{'pid': pid} for pid in pids]
         return jsonify({'players': players})
 
@@ -51,7 +52,7 @@ class PlayerList(MethodView):
         redis.rpush('games:{}:players'.format(gid), pid)
         return redirect(url_for('player', gid=gid, pid=pid))
 
-class Player(MethodView):
+class PlayerView(MethodView):
     def get(self, gid, pid):
         cards = redis.hgetall('games:{}:players:{}:cards'.format(gid, pid))
         return jsonify({'gid': gid, 'pid': pid, 'cards': cards})
@@ -61,7 +62,7 @@ class Player(MethodView):
         redis.delete('games:{}:players:{}:cards'.format(gid, pid))
         return ''
 
-class MoveList(MethodView):
+class MoveListView(MethodView):
     def post(self, gid, pid):
         move = request.get_json()
         valid, errors = validate_move(gid, pid, move)
@@ -71,81 +72,101 @@ class MoveList(MethodView):
         else:
             return jsonify({'errors': errors})
 
-def get_players(gid):
-    return redis.lrange('games:{}:players'.format(gid), 0, -1)
+class Game:
+    def __init__(self, gid):
+        self.gid = gid
 
-def validate_move(gid, pid, move):
-    return True, []
+    def get_pids(self):
+        return redis.lrange('games:{}:players'.format(gid), 0, -1)
 
-def execute_move(gid, pid, move):
-    orders = (move['first'], move['second'], move['third'])
-    messages = []
-    for order in orders:
-        messages.append(execute_order(gid, pid, order))
-    return messages
+    def get_players(self):
+        return [Player(self.gid, pid) for pid in self.get_pids]
 
-def execute_order(gid, pid, order):
-    if order:
-        if order['type'] == 'deploy':
-            return deploy(gid, pid, order['color'], order['to'])
-        elif order['type'] == 'ninja':
-            return ninja(gid, pid, order['color'], order['to'])
-        elif order['type'] == 'transfer':
-            return transfer(gid, pid, order['color'], order['from'], order['to'])
-        elif order['type'] == 'attack':
-            return attack(gid, pid, order['color'], order['to'])
+    def start(self):
+        self.init_deck()
+        colors = ['yellow', 'red', 'purple', 'green', 'blue']
+        random.shuffle(colors)
+        for player in self.get_players():
+            player.set_color(colors.pop())
+            player.draw_cards()
 
-def deploy(gid, pid, color, to_pid):
-    redis.lrem('games:{}:players:{}:hand'.format(gid, pid), color, 1)
-    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, 1)
-    return 'deployed {} to {}'.format(color, to_pid)
+    def init_deck(gid):
+        deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
+        random.shuffle(deck)
+        for card in deck:
+            redis.rpush('games:{}:deck'.format(gid), card)
 
-def ninja(gid, pid, color, to_pid):
-    redis.lrem('games:{}:players:{}:hand'.format(gid, pid), 'ninja', 1)
-    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, -1)
-    return 'killed {} in {}'.format(color, to_pid)
 
-def tranfer(gid, pid, color, from_pid, to_pid):
-    redis.hincrby('games:{}:players:{}:cards'.format(gid, from_pid), color, -1)
-    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, 1)
-    return 'transfered {} from {} to {}'.format(color, from_pid, to_pid)
+class Player:
+    def __init__(self, gid, pid):
+        self.gid = gid
+        self.pid = pid
 
-def attack(gid, pid, color, to_pid):
-    redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, -1)
-    return 'attacked {} in {}'.format(color, to_pid)
+    def key(self, suffix=''):
+        return 'games:{}:players:{}{}'.format(self.gid, self.pid, suffix)
 
-def start_game(gid):
-    init_deck(gid)
-    pids = get_players(gid)
-    colors = ['yellow', 'red', 'purple', 'green', 'blue']
-    random.shuffle(colors)
-    for pid in pids:
-        set_player_color(gid, pid, colors.pop())
-        draw_cards(gid, pid)
+    def validate_move(self, move):
+        return True, []
 
-def set_player_color(gid, pid, color):
-    redis.hset('games:{}:players:{}'.format(gid, pid), 'color', color)
+    def execute_move(self, move):
+        orders = (move['first'], move['second'], move['third'])
+        messages = []
+        for order in orders:
+            messages.append(self.execute_order(order))
+        return messages
 
-def draw_cards(gid, pid):
-    hand_length = redis.llen('games:{}:players:{}:hand'.format(gid, pid))
-    for i in range(4 - hand_length):
-        card = redis.lpop('games:{}:deck'.format(gid))
-        redis.rpush('games:{}:players:{}:hand'.format(gid, pid), card)
+    def execute_order(self, order):
+        if order:
+            if order['type'] == 'deploy':
+                return self.deploy(order['color'], order['to'])
+            elif order['type'] == 'ninja':
+                return self.ninja(order['color'], order['to'])
+            elif order['type'] == 'transfer':
+                return self.transfer(order['color'], order['from'], order['to'])
+            elif order['type'] == 'attack':
+                return self.attack(order['color'], order['to'])
 
-def init_deck(gid):
-    deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
-    random.shuffle(deck)
-    for card in deck:
-        redis.rpush('games:{}:deck'.format(gid), card)
+    def deploy(self, color, to_pid):
+        to_player = Player(self.gid, to_pid)
+        redis.lrem(self.key(':hand'), color, 1)
+        redis.hincrby(to_player.key(':cards'), color, 1)
+        return 'deployed {} to {}'.format(color, to_pid)
 
-app.add_url_rule('/games', view_func=GameList.as_view('game_list'))
-app.add_url_rule('/games/<int:gid>', view_func=Game.as_view('game'))
+    def ninja(self, color, to_pid):
+        to_player = Player(self.gid, to_pid)
+        redis.lrem(self.key(':hand'), 'ninja', 1)
+        redis.hincrby(to_player.key(':cards'), color, -1)
+        return 'killed {} in {}'.format(color, to_pid)
+
+    def tranfer(self, color, from_pid, to_pid):
+        from_player = Player(self.gid, from_pid)
+        to_player = Player(self.gid, to_pid)
+        redis.hincrby(from_player.key(':cards'), color, -1)
+        redis.hincrby(to_player.key(':cards'), color, 1)
+        return 'transfered {} from {} to {}'.format(color, from_pid, to_pid)
+
+    def attack(self, color, to_pid):
+        to_player = Player(self.gid, to_pid)
+        redis.hincrby(to_player.key(':cards'), color, -1)
+        return 'attacked {} in {}'.format(color, to_pid)
+
+    def set_color(self, color):
+        redis.hset(self.key(), 'color', color)
+
+    def draw_cards(self):
+        hand_length = redis.llen(self.key(':hand'))
+        for i in range(4 - hand_length):
+            card = redis.lpop('games:{}:deck'.format(self.gid))
+            redis.rpush(self.key(':hand'), card)
+
+app.add_url_rule('/games', view_func=GameListView.as_view('game_list'))
+app.add_url_rule('/games/<int:gid>', view_func=GameView.as_view('game'))
 app.add_url_rule('/games/<int:gid>/players',
-                 view_func=PlayerList.as_view('player_list'))
+                 view_func=PlayerListView.as_view('player_list'))
 app.add_url_rule('/games/<int:gid>/players/<int:pid>',
-                 view_func=Player.as_view('player'))
+                 view_func=PlayerView.as_view('player'))
 app.add_url_rule('/games/<int:gid>/players/<int:pid>/moves',
-                 view_func=MoveList.as_view('move_list'))
+                 view_func=MoveListView.as_view('move_list'))
 
 if __name__ == '__main__':
     app.run(debug=True)
