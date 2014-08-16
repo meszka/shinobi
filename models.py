@@ -18,15 +18,16 @@ class Game:
     def create(name):
         gid = redis.incr('games:next')
         redis.rpush('games', gid)
-        redis.hset(self.key(), 'name', name)
+        game = Game(gid)
+        redis.hset(game.key(), 'name', name)
         return Game(gid)
 
     def delete(self):
-        redis.lrem('games', 0, gid)
+        redis.lrem('games', 0, self.gid)
         redis.delete(self.key())
 
     def get_name(self):
-        redis.hget(self.key(), 'name')
+        return redis.hget(self.key(), 'name')
 
     def get_pids(self):
         return redis.lrange(self.key(':players'), 0, -1)
@@ -103,7 +104,7 @@ class Player:
         redis.hincrby(to_player.key(':cards'), color, -1)
         return 'killed {} in {}'.format(color, to_pid)
 
-    def tranfer(self, color, from_pid, to_pid):
+    def transfer(self, color, from_pid, to_pid):
         from_player = Player(self.gid, from_pid)
         to_player = Player(self.gid, to_pid)
         redis.hincrby(from_player.key(':cards'), color, -1)

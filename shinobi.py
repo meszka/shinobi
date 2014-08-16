@@ -58,9 +58,10 @@ class PlayerView(MethodView):
 class MoveListView(MethodView):
     def post(self, gid, pid):
         move = request.get_json()
-        valid, errors = validate_move(gid, pid, move)
+        player = Player(gid, pid)
+        valid, errors = player.validate_move(move)
         if valid:
-            messages = execute_move(gid, pid, move)
+            messages = player.execute_move(move)
             return jsonify({'messages': messages})
         else:
             return jsonify({'errors': errors})
