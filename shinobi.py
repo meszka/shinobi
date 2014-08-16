@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, redirect, url_for
 from flask.views import MethodView
 import redis
+import random
 
 app = Flask(__name__)
 
@@ -17,10 +18,10 @@ class GameList(MethodView):
         return jsonify({'games': games})
 
     def post(self):
-        name = request.form['name']
+        game = request.get_json()
         gid = redis.incr('games:next')
         redis.rpush('games', gid)
-        redis.hset('games:{}'.format(gid), 'name', name)
+        redis.hset('games:{}'.format(gid), 'name', game['name'])
         return redirect(url_for('game', gid=gid))
 
 class Game(MethodView):
@@ -29,7 +30,10 @@ class Game(MethodView):
         return jsonify({'gid': gid, 'name': name})
 
     def put(self, gid):
-        pass
+        game = request.get_json()
+        if game['state'] == 'started':
+            start_game(gid)
+            return 'game started'
 
     def delete(self, gid):
         redis.lrem('games', 0, gid)
@@ -38,7 +42,7 @@ class Game(MethodView):
 
 class PlayerList(MethodView):
     def get(self, gid):
-        pids = redis.lrange('games:{}:players'.format(gid), 0, -1)
+        pids = get_players(gid)
         players = [{'pid': pid} for pid in pids]
         return jsonify({'players': players})
 
@@ -67,6 +71,9 @@ class MoveList(MethodView):
         else:
             return jsonify({'errors': errors})
 
+def get_players(gid):
+    return redis.lrange('games:{}:players'.format(gid), 0, -1)
+
 def validate_move(gid, pid, move):
     return True, []
 
@@ -89,12 +96,12 @@ def execute_order(gid, pid, order):
             return attack(gid, pid, order['color'], order['to'])
 
 def deploy(gid, pid, color, to_pid):
-    redis.hincrby('games:{}:players:{}:hand'.format(gid, pid), color, -1)
+    redis.lrem('games:{}:players:{}:hand'.format(gid, pid), color, 1)
     redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, 1)
     return 'deployed {} to {}'.format(color, to_pid)
 
 def ninja(gid, pid, color, to_pid):
-    redis.hincrby('games:{}:players:{}:hand'.format(gid, pid), 'ninja', -1)
+    redis.lrem('games:{}:players:{}:hand'.format(gid, pid), 'ninja', 1)
     redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, -1)
     return 'killed {} in {}'.format(color, to_pid)
 
@@ -106,6 +113,30 @@ def tranfer(gid, pid, color, from_pid, to_pid):
 def attack(gid, pid, color, to_pid):
     redis.hincrby('games:{}:players:{}:cards'.format(gid, to_pid), color, -1)
     return 'attacked {} in {}'.format(color, to_pid)
+
+def start_game(gid):
+    init_deck(gid)
+    pids = get_players(gid)
+    colors = ['yellow', 'red', 'purple', 'green', 'blue']
+    random.shuffle(colors)
+    for pid in pids:
+        set_player_color(gid, pid, colors.pop())
+        draw_cards(gid, pid)
+
+def set_player_color(gid, pid, color):
+    redis.hset('games:{}:players:{}'.format(gid, pid), 'color', color)
+
+def draw_cards(gid, pid):
+    hand_length = redis.llen('games:{}:players:{}:hand'.format(gid, pid))
+    for i in range(4 - hand_length):
+        card = redis.lpop('games:{}:deck'.format(gid))
+        redis.rpush('games:{}:players:{}:hand'.format(gid, pid), card)
+
+def init_deck(gid):
+    deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
+    random.shuffle(deck)
+    for card in deck:
+        redis.rpush('games:{}:deck'.format(gid), card)
 
 app.add_url_rule('/games', view_func=GameList.as_view('game_list'))
 app.add_url_rule('/games/<int:gid>', view_func=Game.as_view('game'))
