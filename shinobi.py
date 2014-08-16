@@ -9,35 +9,32 @@ redis = redis.StrictRedis(decode_responses=True)
 
 class GameListView(MethodView):
     def get(self):
-        gids = redis.lrange('games', 0, -1)
+        gids = Game.get_gids()
         games = []
         for gid in gids:
-            name = redis.hget('games:{}'.format(gid), 'name')
+            name = Game(gid).get_name()
             game = {'gid': gid, 'name': name}
             games.append(game)
         return jsonify({'games': games})
 
     def post(self):
-        game = request.get_json()
-        gid = redis.incr('games:next')
-        redis.rpush('games', gid)
-        redis.hset('games:{}'.format(gid), 'name', game['name'])
-        return redirect(url_for('game', gid=gid))
+        game_json = request.get_json()
+        game = Game.create(game_json['name'])
+        return redirect(url_for('game', gid=game.gid))
 
 class GameView(MethodView):
     def get(self, gid):
-        name = redis.hget('games:{}'.format(gid), 'name')
+        name = Game(gid).get_name()
         return jsonify({'gid': gid, 'name': name})
 
     def put(self, gid):
-        game = request.get_json()
-        if game['state'] == 'started':
-            start_game(gid)
+        game_json = request.get_json()
+        if game_json['state'] == 'started':
+            Game(gid).start()
             return 'game started'
 
     def delete(self, gid):
-        redis.lrem('games', 0, gid)
-        redis.delete('games:{}'.format(gid))
+        Game(gid).delete()
         return ''
 
 class PlayerListView(MethodView):
@@ -48,18 +45,16 @@ class PlayerListView(MethodView):
         return jsonify({'players': players})
 
     def post(self, gid):
-        pid = redis.incr('games:{}:players:next'.format(gid))
-        redis.rpush('games:{}:players'.format(gid), pid)
-        return redirect(url_for('player', gid=gid, pid=pid))
+        player = Game(gid).create_player()
+        return redirect(url_for('player', gid=gid, pid=player.pid))
 
 class PlayerView(MethodView):
     def get(self, gid, pid):
-        cards = redis.hgetall('games:{}:players:{}:cards'.format(gid, pid))
+        cards = Player(gid, pid).get_cards()
         return jsonify({'gid': gid, 'pid': pid, 'cards': cards})
 
     def delete(self, gid, pid):
-        redis.lrem('games:{}:players'.format(gid), 0, pid)
-        redis.delete('games:{}:players:{}:cards'.format(gid, pid))
+        Player(gid, pid).delete()
         return ''
 
 class MoveListView(MethodView):
@@ -76,11 +71,36 @@ class Game:
     def __init__(self, gid):
         self.gid = gid
 
+    def key(self, suffix=''):
+        return 'games:{}}{}'.format(self.gid, suffix)
+
+    @staticmethod
+    def get_gids():
+        return redis.lrange('games', 0, -1)
+
+    @staticmethod
+    def create(name):
+        gid = redis.incr('games:next')
+        redis.rpush('games', gid)
+        redis.hset(self.key(), 'name', name)
+        return Game(gid)
+
+    def delete(self):
+        redis.lrem('games', 0, gid)
+        redis.delete(self.key())
+
+    def get_name(self):
+        redis.hget(self.key(), 'name')
+
     def get_pids(self):
-        return redis.lrange('games:{}:players'.format(gid), 0, -1)
+        return redis.lrange(self.key(':players'), 0, -1)
 
     def get_players(self):
         return [Player(self.gid, pid) for pid in self.get_pids]
+
+    def create_player(self):
+        pid = redis.incr(self.key(':players:next'))
+        redis.rpush(self.key(':players'), pid)
 
     def start(self):
         self.init_deck()
@@ -94,7 +114,7 @@ class Game:
         deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
         random.shuffle(deck)
         for card in deck:
-            redis.rpush('games:{}:deck'.format(gid), card)
+            redis.rpush(self.key(':deck'), card)
 
 
 class Player:
@@ -104,6 +124,15 @@ class Player:
 
     def key(self, suffix=''):
         return 'games:{}:players:{}{}'.format(self.gid, self.pid, suffix)
+
+    def get_cards(self):
+        return redis.hgetall(self.key(':cards'))
+
+    def delete(self):
+        game = Game(self.gid)
+        redis.lrem(game.key(':players'), 0, self.pid)
+        redis.delete(self.key(':cards'))
+        redis.delete(self.key(':hand'))
 
     def validate_move(self, move):
         return True, []
