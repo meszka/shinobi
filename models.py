@@ -8,7 +8,7 @@ class Game:
         self.gid = gid
 
     def key(self, suffix=''):
-        return 'games:{}}{}'.format(self.gid, suffix)
+        return 'games:{}{}'.format(self.gid, suffix)
 
     @staticmethod
     def get_gids():
