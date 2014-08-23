@@ -56,16 +56,19 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
     states.first1 = {
         clickCard: function (card, index) {
             selection = { type: 'card', index: index }
-            switchState(states.first2, { card: card });
+            if (card == 'ninja') {
+                switchState(states.first2Ninja);
+            } else {
+                switchState(states.first2Deploy, { card: card });
+            }
         },
     };
 
-    states.first2 = {
+    states.first2Deploy = {
         enter: function (options) {
             this.card = options.card;
         },
         clickPlayer: function (player) {
-            // TODO: ninja
             if (player.pid == myPid) {
                 return;
             }
@@ -83,8 +86,30 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
         },
     };
 
+    states.first2Ninja = {
+        clickStack: function (player, card) {
+            if (player.pid == myPid) {
+                return;
+            }
+            selection = null;
+            move.first = {
+                type: 'ninja',
+                to: player.pid,
+                color: card,
+            };
+            var index = $scope.hand.indexOf('ninja');
+            $scope.hand.splice(index, 1);
+            removeCard(player, card)
+            console.log(move.first);
+            switchState(states.second1);
+        },
+    };
+
     states.second1 = {
         clickCard: function (card, index) {
+            if (card == 'ninja') {
+                return;
+            }
             move.second = {
                 type: 'deploy',
                 to: myPid,
