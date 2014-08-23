@@ -65,6 +65,9 @@ class Player:
     def get_cards(self):
         return redis.hgetall(self.key(':cards'))
 
+    def get_hand(self):
+        return redis.lrange(self.key(':hand'), 0, -1)
+
     def delete(self):
         game = Game(self.gid)
         redis.lrem(game.key(':players'), 0, self.pid)
@@ -94,7 +97,7 @@ class Player:
 
     def deploy(self, color, to_pid):
         to_player = Player(self.gid, to_pid)
-        redis.lrem(self.key(':hand'), color, 1)
+        redis.lrem(self.key(':hand'), 1, color)
         redis.hincrby(to_player.key(':cards'), color, 1)
         return 'deployed {} to {}'.format(color, to_pid)
 
