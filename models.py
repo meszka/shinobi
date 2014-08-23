@@ -30,12 +30,19 @@ class Game:
     def get_name(self):
         return redis.hget(self.key(), 'name')
 
+    def get_current_pid(self):
+        pid = redis.hget(self.key(), 'current_player')
+        return int(pid)
+
+    def set_current_pid(self, pid):
+        redis.hset(self.key(), 'current_player', pid)
+
     def get_pids(self):
         pids = redis.lrange(self.key(':players'), 0, -1)
         return [int(pid) for pid in pids]
 
     def get_players(self):
-        return [Player(self.gid, pid) for pid in self.get_pids]
+        return [Player(self.gid, pid) for pid in self.get_pids()]
 
     def create_player(self):
         pid = redis.incr(self.key(':players:next'))
@@ -45,9 +52,20 @@ class Game:
         self.init_deck()
         colors = ['yellow', 'red', 'purple', 'green', 'blue']
         random.shuffle(colors)
-        for player in self.get_players():
+        players = self.get_players()
+        for player in players:
             player.set_color(colors.pop())
             player.draw_cards()
+        current_player = random.pick(players)
+        self.set_current_pid(current_player.pid)
+
+    def next_player(self):
+        current_pid = self.get_current_pid()
+        pids = self.get_pids()
+        current_index = pids.index(current_pid)
+        next_index = (current_index + 1) % len(pids)
+        next_pid = pids[next_index]
+        self.set_current_pid(next_pid)
 
     def init_deck(self):
         deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
@@ -87,6 +105,9 @@ class Player:
         messages = []
         for order in orders:
             messages.append(self.execute_order(order))
+        self.draw_cards()
+        Game(self.gid).next_player()
+        # TODO: notify players waiting for move
         return messages
 
     def execute_order(self, order):
