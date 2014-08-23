@@ -21,6 +21,7 @@ class Game:
         redis.rpush('games', gid)
         game = Game(gid)
         redis.hset(game.key(), 'name', name)
+        redis.hset(game.key(), 'state', 'setup')
         return Game(gid)
 
     def delete(self):
@@ -29,6 +30,18 @@ class Game:
 
     def get_name(self):
         return redis.hget(self.key(), 'name')
+
+    def get_state(self):
+        return redis.hget(self.key(), 'state')
+
+    def set_state(self, state):
+        redis.hset(self.key(), 'state', state)
+
+    def get_last_pid(self):
+        return redis.hget(self.key(), 'last_player')
+
+    def set_last_pid(self, pid):
+        redis.hset(self.key(), 'last_player', pid)
 
     def get_current_pid(self):
         pid = redis.hget(self.key(), 'current_player')
@@ -44,6 +57,10 @@ class Game:
     def get_players(self):
         return [Player(self.gid, pid) for pid in self.get_pids()]
 
+    def deck_empty(self):
+        deck_length = int(redis.llen(self.key(':deck')))
+        return deck_length == 0
+
     def create_player(self):
         pid = redis.incr(self.key(':players:next'))
         redis.rpush(self.key(':players'), pid)
@@ -58,6 +75,7 @@ class Game:
             player.draw_cards()
         current_player = random.pick(players)
         self.set_current_pid(current_player.pid)
+        self.set_state('started')
 
     def next_player(self):
         current_pid = self.get_current_pid()
@@ -66,6 +84,11 @@ class Game:
         next_index = (current_index + 1) % len(pids)
         next_pid = pids[next_index]
         self.set_current_pid(next_pid)
+        # TODO: notify players waiting for move
+
+    def end(self):
+        # TODO: find winner
+        self.set_state('ended')
 
     def init_deck(self):
         deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
@@ -106,8 +129,15 @@ class Player:
         for order in orders:
             messages.append(self.execute_order(order))
         self.draw_cards()
-        Game(self.gid).next_player()
-        # TODO: notify players waiting for move
+        game = Game(self.gid)
+        game_State = game.get_state()
+        last_pid = game.get_last_pid()
+        if not last_pid and game.deck_empty():
+            self.set_last_pid(self.pid)
+        if self.pid == last_pid:
+            game.end()
+        else:
+            game.next_player()
         return messages
 
     def execute_order(self, order):
