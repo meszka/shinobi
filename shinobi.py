@@ -39,7 +39,11 @@ class PlayerListView(MethodView):
     def get(self, gid):
         game = Game(gid)
         pids = game.get_pids()
-        players = [{'pid': pid} for pid in pids]
+        players = []
+        for pid in pids:
+            cards = Player(gid, pid).get_cards()
+            player = {'pid': pid, 'cards': cards}
+            players.append(player)
         return jsonify({'players': players})
 
     def post(self, gid):
@@ -66,6 +70,12 @@ class MoveListView(MethodView):
         else:
             return jsonify({'errors': errors})
 
+class HandView(MethodView):
+    def get(self, gid, pid):
+        player = Player(gid, pid)
+        hand =  player.get_hand()
+        return jsonify({'hand': hand})
+
 app.add_url_rule('/games', view_func=GameListView.as_view('game_list'))
 app.add_url_rule('/games/<int:gid>', view_func=GameView.as_view('game'))
 app.add_url_rule('/games/<int:gid>/players',
@@ -74,6 +84,8 @@ app.add_url_rule('/games/<int:gid>/players/<int:pid>',
                  view_func=PlayerView.as_view('player'))
 app.add_url_rule('/games/<int:gid>/players/<int:pid>/moves',
                  view_func=MoveListView.as_view('move_list'))
+app.add_url_rule('/games/<int:gid>/players/<int:pid>/hand',
+                 view_func=HandView.as_view('hand'))
 
 if __name__ == '__main__':
     app.run(debug=True)
