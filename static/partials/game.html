@@ -1,10 +1,13 @@
 <h1>{{game.name}}</h1>
 
 <div>
-    <div ng-repeat="player in players" id="player-{{player.pid}}">
+    <div ng-repeat="player in players" id="player-{{player.pid}}"
+         ng-click="clickPlayer(player)">
         <h2>Player {{player.pid}}</h3>
         <ul class="province">
-            <ul ng-repeat="(card, count) in player.cards" class="stack">
+            <ul ng-repeat="(card, count) in player.cards" class="stack"
+                ng-click="clickStack(player, card)"
+                ng-class="{selected: selectedStack(player.pid, card)}">
                 <li ng-repeat="i in range(count)" class="card {{card}}">
                     {{card}}
                 </li>
@@ -15,8 +18,11 @@
 
 <ul class="hand">
     <h2>My hand</h2>
-    <li ng-repeat="card in hand track by $index" id="hand-{{$index}}"
-        class="card {{card}}">
+    <li ng-repeat="card in hand track by $index"
+        id="hand-{{$index}}"
+        class="card {{card}}"
+        ng-click="clickCard(card, $index)"
+        ng-class="{selected: selectedCard($index)}">
         {{card}}
     </li>
 </ul>
