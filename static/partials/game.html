@@ -1,18 +1,20 @@
 <h1>{{game.name}}</h1>
 
-<div>
-    <div ng-repeat="player in players" id="player-{{player.pid}}"
-         ng-click="clickPlayer(player)">
-        <h2>Player {{player.pid}}</h3>
-        <ul class="province">
-            <ul ng-repeat="(card, count) in player.cards" class="stack"
-                ng-click="clickStack(player, card)"
-                ng-class="{selected: selectedStack(player.pid, card)}">
-                <li ng-repeat="i in range(count)" class="card {{card}}">
-                    {{card}}
-                </li>
-            </ul> 
-        </ul>
+<div class="container-fluid">
+    <div class="row">
+        <div ng-repeat="player in players" id="player-{{player.pid}}" class="col-lg-3 col-md-4 col-sm-6"
+            ng-click="clickPlayer(player)">
+            <h2>Player {{player.pid}}</h3>
+            <ul class="province">
+                <ul ng-repeat="(card, count) in player.cards" class="stack"
+                    ng-click="clickStack(player, card)"
+                    ng-class="{selected: selectedStack(player.pid, card)}">
+                    <li ng-repeat="i in range(count)" class="card {{card}}">
+                        {{card}}
+                    </li>
+                </ul>
+            </ul>
+        </div>
     </div>
 </div>
 
