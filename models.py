@@ -12,7 +12,8 @@ class Game:
 
     @staticmethod
     def get_gids():
-        return redis.lrange('games', 0, -1)
+        gids = redis.lrange('games', 0, -1)
+        return [int(gid) for gid in gids]
 
     @staticmethod
     def create(name):
@@ -30,7 +31,8 @@ class Game:
         return redis.hget(self.key(), 'name')
 
     def get_pids(self):
-        return redis.lrange(self.key(':players'), 0, -1)
+        pids = redis.lrange(self.key(':players'), 0, -1)
+        return [int(pid) for pid in pids]
 
     def get_players(self):
         return [Player(self.gid, pid) for pid in self.get_pids]
@@ -63,7 +65,10 @@ class Player:
         return 'games:{}:players:{}{}'.format(self.gid, self.pid, suffix)
 
     def get_cards(self):
-        return redis.hgetall(self.key(':cards'))
+        cards = redis.hgetall(self.key(':cards'))
+        for card, count in cards.items():
+            cards[card] = int(count)
+        return cards
 
     def get_hand(self):
         return redis.lrange(self.key(':hand'), 0, -1)
