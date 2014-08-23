@@ -1,0 +1,44 @@
+.province {
+    border: 1px solid black;
+    width: 550px;
+    min-height: 200px;
+    padding: 5px;
+}
+.stack {
+    display: inline-block;
+    margin: 120px 0 0 0;
+    padding: 0;
+}
+
+.card {
+    width: 100px;
+    height: 140px;
+    border: 1px solid black;
+    margin: 4px;
+    color: white;
+}
+
+.stack .card {
+    display: block;
+    margin-top: -120px;
+}
+
+.hand .card {
+    display: inline-block;
+}
+
+.card.red {
+    background-color: #d9534f;
+}
+.card.yellow {
+    background-color: #f0ad4e;
+}
+.card.blue {
+    background-color: #5bc0de;
+}
+.card.purple {
+    background-color: #6f5499;
+}
+.card.green {
+    background-color: #5cb85c;
+}

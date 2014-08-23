@@ -1,0 +1,8 @@
+<ul ng-repeat="game in games">
+    <li>Name: {{game.name}} (gid: {{game.gid}})</li>
+</ul>
+<form>
+    Create new game:
+    <input type="text" ng-model="newGame.name">
+    <button ng-click="createGame(newGame)">Create</button>
+</form>

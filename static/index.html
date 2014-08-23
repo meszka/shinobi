@@ -1,24 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="Shinobi">
 <head>
     <meta charset="utf-8">
     <title>Shinobi</title>
-    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.22/angular.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.22/angular-route.min.js"></script>
     <script src="app.js"></script>
     <script src="controllers.js"></script>
 </head>
 <body>
 
-    <div ng-app="Shinobi" ng-controller="GamesController">
-        <ul ng-repeat="game in games">
-            <li>Name: {{game.name}} (gid: {{game.gid}})</li>
-        </ul>
-        <form>
-            Create new game:
-            <input type="text" ng-model="newGame.name">
-            <button ng-click="createGame(newGame)">Create</button>
-        </form>
-    </div>
-
+    <div ng-view></div>
 </body>
 </html>
