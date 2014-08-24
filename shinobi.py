@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, url_for
+from flask import Flask, request, jsonify, redirect, url_for, Response
 from flask.views import MethodView
 
 from models import Game, Player
@@ -84,6 +84,13 @@ class HandView(MethodView):
         hand =  player.get_hand()
         return jsonify({'hand': hand})
 
+class NotificationView(MethodView):
+    def get(self, gid):
+        game = Game(gid)
+        return Response(game.current_player_stream(),
+                        mimetype='text/event-stream')
+
+
 app.add_url_rule('/games', view_func=GameListView.as_view('game_list'))
 app.add_url_rule('/games/<int:gid>', view_func=GameView.as_view('game'))
 app.add_url_rule('/games/<int:gid>/players',
@@ -94,6 +101,8 @@ app.add_url_rule('/games/<int:gid>/players/<int:pid>/moves',
                  view_func=MoveListView.as_view('move_list'))
 app.add_url_rule('/games/<int:gid>/players/<int:pid>/hand',
                  view_func=HandView.as_view('hand'))
+app.add_url_rule('/games/<int:gid>/notification',
+                 view_func=NotificationView.as_view('notification'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, threaded=True)

@@ -100,7 +100,7 @@ class Game:
         next_index = (current_index + 1) % len(pids)
         next_pid = pids[next_index]
         self.set_current_pid(next_pid)
-        # TODO: notify players waiting for move
+        redis.publish(self.key(':current_player_channel'), next_pid)
 
     def end(self):
         winners = self.find_winners
@@ -130,6 +130,13 @@ class Game:
         random.shuffle(deck)
         for card in deck:
             redis.rpush(self.key(':deck'), card)
+
+    def current_player_stream(self):
+        p = redis.pubsub()
+        p.subscribe(self.key(':current_player_channel'))
+        for message in p.listen():
+            if message['type'] == 'message':
+                yield 'data: {}\n\n'.format(message['data'])
 
 
 class Player:
