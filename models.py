@@ -1,7 +1,15 @@
 import redis
 import random
+import collections
+
 
 redis = redis.StrictRedis(decode_responses=True)
+
+
+def best(scores):
+    max_score = max([score for player, score in scores])
+    return [player for player, score in scores if score == max_score]
+
 
 class Game:
     def __init__(self, gid):
@@ -57,6 +65,14 @@ class Game:
     def get_players(self):
         return [Player(self.gid, pid) for pid in self.get_pids()]
 
+    def get_winner_pids(self):
+        pids = redis.lrange(self.key(':winners'), 0, -1)
+        return [int(pid) for pid in pids]
+
+    def set_winner_pids(self, pids):
+        for pid in pids:
+            redis.rpush(self.key(':winners)', pid))
+
     def deck_empty(self):
         deck_length = int(redis.llen(self.key(':deck')))
         return deck_length == 0
@@ -87,8 +103,27 @@ class Game:
         # TODO: notify players waiting for move
 
     def end(self):
-        # TODO: find winner
+        winners = self.find_winners
+        winner_pids = [player.pid for player in winners]
+        self.set_winner_pids(winner_pids)
         self.set_state('ended')
+
+    def find_winners(self):
+        players = self.get_players()
+        color_counts = collections.Counter()
+        for player in players:
+            for color, count in player.get_cards():
+                color_counts[color] += count
+        winning_colors = best(color_counts.items())
+        colors_to_players = {player.get_color(): player for player in players}
+        winners = [colors_to_players[color] for color in winning_colors]
+        if len(winners) == 1:
+            return winners
+        else:
+            def score2(player):
+                return player.cards.get(player.get_color(), 0)
+            winners2 = [(score2(player), player) for player in winners]
+            return best(winners2)
 
     def init_deck(self):
         deck = 11 * ['yellow', 'red', 'purple', 'green', 'blue'] + 3 * ['ninja']
@@ -173,6 +208,9 @@ class Player:
         to_player = Player(self.gid, to_pid)
         redis.hincrby(to_player.key(':cards'), color, -1)
         return 'attacked {} in {}'.format(color, to_pid)
+
+    def get_color(self):
+        redis.hget(self.key(), 'color')
 
     def set_color(self, color):
         redis.hset(self.key(), 'color', color)
