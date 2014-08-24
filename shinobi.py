@@ -22,8 +22,16 @@ class GameListView(MethodView):
 
 class GameView(MethodView):
     def get(self, gid):
-        name = Game(gid).get_name()
-        return jsonify({'gid': gid, 'name': name})
+        game = Game(gid)
+        name = game.get_name()
+        status = game.get_state()
+        current_player = game.get_current_pid()
+        return jsonify({
+            'gid': gid,
+            'name': name,
+            'status': status,
+            'currentPlayer': current_player,
+        })
 
     def put(self, gid):
         game_json = request.get_json()
@@ -66,9 +74,9 @@ class MoveListView(MethodView):
         valid, errors = player.validate_move(move)
         if valid:
             messages = player.execute_move(move)
-            return jsonify({'messages': messages})
+            return jsonify({'status': 'success', 'messages': messages})
         else:
-            return jsonify({'errors': errors})
+            return jsonify({'status': 'error', 'messages': errors})
 
 class HandView(MethodView):
     def get(self, gid, pid):
