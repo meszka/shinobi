@@ -130,7 +130,6 @@ class Player:
             messages.append(self.execute_order(order))
         self.draw_cards()
         game = Game(self.gid)
-        game_State = game.get_state()
         last_pid = game.get_last_pid()
         if not last_pid and game.deck_empty():
             self.set_last_pid(self.pid)
