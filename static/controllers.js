@@ -163,27 +163,43 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
                 to: player.pid,
                 color: card,
             };
-            console.log(move.third);
+            console.log(move);
             removeCard(player, card);
+            switchState(states.disabled);
+        },
+        clickNoAttack: function () {
+            move.third = null;
+            console.log(move);
+            switchState(states.disabled);
         },
     };
+
+    states.disabled = {};
 
     var currentState = states.first1;
 
     $scope.range = _.range;
 
     $scope.clickStack = function (player, card) {
-        // selection = { type: 'stack', pid: player.pid, card: card }
         if (currentState.clickStack !== undefined) {
             currentState.clickStack(player, card);
         }
     };
 
     $scope.clickCard = function (card, index) {
-        // selection = { type: 'card', index: index }
         if (currentState.clickCard !== undefined) {
             currentState.clickCard(card, index);
         }
+    };
+
+    $scope.clickNoAttack = function () {
+        if (currentState.clickNoAttack !== undefined) {
+            currentState.clickNoAttack();
+        }
+    };
+
+    $scope.showNoAttack = function () {
+        return currentState === states.third;
     };
 
     $scope.clickPlayer = function (player) {
@@ -205,17 +221,40 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
                selection.index == index;
     };
 
+    $scope.clickDone = function () {
+        switchState(states.disabled);
+        $http.post(root + '/games/' + gid + '/players/' + myPid + '/moves', move).
+            success(function (data) {
+                console.log(data);
+                update();
+                switchState(states.first1);
+                move = {};
+            });
+    };
+
+    $scope.showDone = function () {
+        return move.hasOwnProperty('first') &&
+               move.hasOwnProperty('second') &&
+               move.hasOwnProperty('third');
+    };
+
+    $scope.clickReset = function () {
+        move = {};
+        switchState(states.first);
+    };
+
     var update = function () {
         $http.get(root + '/games/' + gid).success(function (data) {
             $scope.game = data;
+            myPid = data.currentPlayer;
+            $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
+                success(function (data) {
+                    $scope.hand = data.hand;
+                });
         });
         $http.get(root + '/games/' + gid + '/players').success(function (data) {
             $scope.players = data.players;
         });
-        $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
-            success(function (data) {
-                $scope.hand = data.hand;
-            });
     };
 
     update();
