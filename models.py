@@ -167,7 +167,7 @@ class Player:
         game = Game(self.gid)
         last_pid = game.get_last_pid()
         if not last_pid and game.deck_empty():
-            self.set_last_pid(self.pid)
+            game.set_last_pid(self.pid)
         if self.pid == last_pid:
             game.end()
         else:
