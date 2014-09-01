@@ -240,7 +240,8 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
 
     $scope.clickReset = function () {
         move = {};
-        switchState(states.first);
+        update();
+        switchState(states.first1);
     };
 
     var update = function () {
