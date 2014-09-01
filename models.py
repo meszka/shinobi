@@ -169,12 +169,12 @@ class Player:
         if not all_orders:
             return False, ['Incomplete move']
         results = [
-            validate_first(move['first']),
-            validate_second(move['second']),
-            validate_third(move['third']),
+            self.validate_first(move['first']),
+            self.validate_second(move['second']),
+            self.validate_third(move['third']),
         ]
         oks, messages = zip(*results)
-        return all(oks), itertools.chain(messages)
+        return all(oks), list(itertools.chain(messages))
 
     def validation_setup(self):
         self.dirty = set()
@@ -188,27 +188,27 @@ class Player:
         if 'type' not in order:
             return False, 'No type for first order'
         if order['type'] == 'deploy':
-            return validate_first_deploy(self, order)
+            return self.validate_first_deploy(order)
         if order['type'] == 'ninja':
-            return validate_ninja(self, order)
+            return self.validate_ninja(order)
         return False, 'Wrong type for first order'
 
     def validate_second(self, order):
         if 'type' not in order:
             return False, 'No type for second order'
         if order['type'] == 'deploy':
-            return validate_second_deploy(self, order)
+            return self.validate_second_deploy(order)
         if order['type'] == 'transfer':
-            return validate_transfer(self, order)
+            return self.validate_transfer(order)
         return False, 'Wrong type for second order'
 
     def validate_third(self, order):
         if order is None:
-            return validate_no_attack(self)
+            return self.validate_no_attack()
         if 'type' not in order:
             return False, 'No type for third order'
         if order['type'] == 'attack':
-            return validate_attack(self)
+            return self.validate_attack(order)
         return False, 'Wrong type for third order'
 
     def validate_first_deploy(self, order):
@@ -218,7 +218,7 @@ class Player:
             return False, 'You do not have a {} card to deploy' \
                           .format(color)
         if to_pid == self.pid:
-            return False, 'You cannot deploy to your own' \
+            return False, 'You cannot deploy to your own ' \
                           'province in the first order'
         self.tmp_hand.remove(color)
         self.tmp_cards[to_pid][color] += 1
@@ -232,8 +232,8 @@ class Player:
             return False, 'You do not have a {} card to deploy' \
                           .format(color)
         if to_pid == self.pid:
-            return False, 'You cannot deploy to your own' \
-                         'province in the first order'
+            return False, 'You cannot deploy to your own ' \
+                          'province in the first order'
         self.tmp_hand.remove(color)
         self.tmp_cards[to_pid][color] += 1
         self.dirty.add((to_pid, color))
@@ -270,7 +270,8 @@ class Player:
         if self.can_attack(to_pid, color):
             return True, ''
         else:
-            return False, 'Cannot attack player {} {}'.format(to_pid, color)
+            return False, 'You cannot attack player {} {}' \
+                          .format(to_pid, color)
 
     def validate_no_attack(self):
         if all(not self.can_attack(pid, color)
@@ -287,12 +288,12 @@ class Player:
                 if count > 0:
                     yield (pid, color)
 
-    def can_attack(self, pid, enemy_color):
-        if (pid, color) in self.dirty:
+    def can_attack(self, enemy_pid, enemy_color):
+        if (enemy_pid, enemy_color) in self.dirty:
             return False
-        enemy_count = self.tmp_cards[pid][enemy_color]
+        enemy_count = self.tmp_cards[enemy_pid][enemy_color]
         my_cards = self.tmp_cards[self.pid]
-        return any(color for color, count in my_cards
+        return any(color for color, count in my_cards.items()
                    if count > enemy_count and color != enemy_color)
 
     def execute_move(self, move):
