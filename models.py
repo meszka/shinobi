@@ -90,7 +90,7 @@ class Game:
         for player in players:
             player.set_color(colors.pop())
             player.draw_cards()
-        current_player = random.pick(players)
+        current_player = random.choice(players)
         self.set_current_pid(current_player.pid)
         self.set_state('started')
 
@@ -280,10 +280,10 @@ class Player:
             return False, 'You must attack if you can'
 
     def enemy_stacks(self):
-        enemies = Game(self.pid).get_pids()
+        enemies = Game(self.gid).get_pids()
         enemies.remove(self.pid)
         for pid in enemies:
-            for color, count in self.tmp_cards[pid]:
+            for color, count in self.tmp_cards[pid].items():
                 if count > 0:
                     yield (pid, color)
 
