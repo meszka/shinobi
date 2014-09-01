@@ -49,14 +49,14 @@ class GameView(MethodView):
 class PlayerListView(MethodView):
     def get(self, gid):
         game = Game(gid)
-        game_status = game.get_status()
+        game_state = game.get_state()
         pids = game.get_pids()
         players = []
         for pid in pids:
             player = Player(gid, pid)
             cards = player.get_cards()
             player = {'pid': pid, 'cards': cards}
-            if game_status == 'ended':
+            if game_state == 'ended':
                 player['color'] = player.get_color()
             players.append(player)
         return jsonify({'players': players})
