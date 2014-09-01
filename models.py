@@ -356,4 +356,5 @@ class Player:
         hand_length = redis.llen(self.key(':hand'))
         for i in range(4 - hand_length):
             card = redis.lpop('games:{}:deck'.format(self.gid))
-            redis.rpush(self.key(':hand'), card)
+            if card:
+                redis.rpush(self.key(':hand'), card)
