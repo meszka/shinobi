@@ -31,4 +31,6 @@
 <button ng-show="showNoAttack()" ng-click="clickNoAttack()">No attack</button>
 <button ng-show="showDone()" ng-click="clickDone()">Done</button>
 <button ng-click="clickReset()">Reset move</button>
-
+<ul>
+    <li ng-repeat="message in messages track by $index">{{message}}</li>
+</ul>

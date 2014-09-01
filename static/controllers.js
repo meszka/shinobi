@@ -178,6 +178,8 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
 
     var currentState = states.first1;
 
+    $scope.messages = []
+
     $scope.range = _.range;
 
     $scope.clickStack = function (player, card) {
@@ -226,6 +228,7 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
         $http.post(root + '/games/' + gid + '/players/' + myPid + '/moves', move).
             success(function (data) {
                 console.log(data);
+                $scope.messages = data.messages;
                 update();
                 switchState(states.first1);
                 move = {};
