@@ -265,10 +265,35 @@ class Player:
         return True, ''
 
     def validate_attack(self, order):
-        pass
+        to_pid = order['to']
+        color = order['color']
+        if self.can_attack(to_pid, color):
+            return True, ''
+        else:
+            return False, 'Cannot attack player {} {}'.format(to_pid, color)
 
     def validate_no_attack(self):
-        pass
+        if all(not self.can_attack(pid, color)
+               for pid, color in self.enemy_stacks()):
+            return True, ''
+        else:
+            return False, 'You must attack if you can'
+
+    def enemy_stacks(self):
+        enemies = Game(self.pid).get_pids()
+        enemies.remove(self.pid)
+        for pid in enemies:
+            for color, count in self.tmp_cards[pid]:
+                if count > 0:
+                    yield (pid, color)
+
+    def can_attack(self, pid, enemy_color):
+        if (pid, color) in self.dirty:
+            return False
+        enemy_count = self.tmp_cards[pid][enemy_color]
+        my_cards = self.tmp_cards[self.pid]
+        return any(color for color, count in my_cards
+                   if count > enemy_count and color != enemy_color)
 
     def execute_move(self, move):
         orders = (move['first'], move['second'], move['third'])
