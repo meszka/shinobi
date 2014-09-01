@@ -1,6 +1,7 @@
 import redis
 import random
 import collections
+import itertools
 
 
 redis = redis.StrictRedis(decode_responses=True)
@@ -163,7 +164,111 @@ class Player:
         redis.delete(self.key(':hand'))
 
     def validate_move(self, move):
-        return True, []
+        self.validation_setup()
+        all_orders = 'first' in move and 'second' in move and 'third' in move
+        if not all_orders:
+            return False, ['Incomplete move']
+        results = [
+            validate_first(move['first']),
+            validate_second(move['second']),
+            validate_third(move['third']),
+        ]
+        oks, messages = zip(*results)
+        return all(oks), itertools.chain(messages)
+
+    def validation_setup(self):
+        self.dirty = set()
+        self.tmp_hand = self.get_hand()
+        self.tmp_cards = {}
+        for player in Game(self.gid).get_players():
+            dd = collections.defaultdict(int, player.get_cards())
+            self.tmp_cards[player.pid] = dd
+
+    def validate_first(self, order):
+        if 'type' not in order:
+            return False, 'No type for first order'
+        if order['type'] == 'deploy':
+            return validate_first_deploy(self, order)
+        if order['type'] == 'ninja':
+            return validate_ninja(self, order)
+        return False, 'Wrong type for first order'
+
+    def validate_second(self, order):
+        if 'type' not in order:
+            return False, 'No type for second order'
+        if order['type'] == 'deploy':
+            return validate_second_deploy(self, order)
+        if order['type'] == 'transfer':
+            return validate_transfer(self, order)
+        return False, 'Wrong type for second order'
+
+    def validate_third(self, order):
+        if order is None:
+            return validate_no_attack(self)
+        if 'type' not in order:
+            return False, 'No type for third order'
+        if order['type'] == 'attack':
+            return validate_attack(self)
+        return False, 'Wrong type for third order'
+
+    def validate_first_deploy(self, order):
+        to_pid = order['to']
+        color = order['color']
+        if color not in self.tmp_hand:
+            return False, 'You do not have a {} card to deploy' \
+                          .format(color)
+        if to_pid == self.pid:
+            return False, 'You cannot deploy to your own' \
+                          'province in the first order'
+        self.tmp_hand.remove(color)
+        self.tmp_cards[to_pid][color] += 1
+        self.dirty.add((to_pid, color))
+        return True, ''
+
+    def validate_second_deploy(self, order):
+        to_pid = order['to']
+        color = order['color']
+        if color not in self.tmp_hand:
+            return False, 'You do not have a {} card to deploy' \
+                          .format(color)
+        if to_pid == self.pid:
+            return False, 'You cannot deploy to your own' \
+                         'province in the first order'
+        self.tmp_hand.remove(color)
+        self.tmp_cards[to_pid][color] += 1
+        self.dirty.add((to_pid, color))
+        return True, ''
+
+    def validate_ninja(self, order):
+        to_pid = order['to']
+        color = order['color']
+        if 'ninja' not in self.tmp_hand:
+            return False, 'You do not have a ninja card'
+        if color not in self.tmp_cards[to_pid]:
+            return False, 'Player {} does not have a {} card' \
+                          .format(to_pid, color)
+        self.tmp_hand.remove('ninja')
+        self.tmp_cards[to_pid][color] -= 1
+        return True, ''
+
+    def validate_transfer(self, order):
+        from_pid = order['from']
+        to_pid = order['to']
+        color = order['color']
+        if from_pid == self.pid:
+            return False, 'You cannot transfer from your own province'
+        if self.tmp_cards[from_pid][color] == 0:
+            return False, 'Player {} does not have a {} card' \
+                          .format(from_pid, color)
+        self.tmp_cards[from_pid][color] -= 1
+        self.tmp_cards[to_pid][color] += 1
+        return True, ''
+
+    def validate_attack(self, order):
+        pass
+
+    def validate_no_attack(self):
+        pass
 
     def execute_move(self, move):
         orders = (move['first'], move['second'], move['third'])
