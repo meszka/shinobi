@@ -231,12 +231,11 @@ class Player:
         if color not in self.tmp_hand:
             return False, 'You do not have a {} card to deploy' \
                           .format(color)
-        if to_pid == self.pid:
-            return False, 'You cannot deploy to your own ' \
-                          'province in the first order'
+        if to_pid != self.pid:
+            return False, "You cannot deploy to an enemy's" \
+                          "province in the second order"
         self.tmp_hand.remove(color)
         self.tmp_cards[to_pid][color] += 1
-        self.dirty.add((to_pid, color))
         return True, ''
 
     def validate_ninja(self, order):
