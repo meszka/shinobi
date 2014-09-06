@@ -1,0 +1,11 @@
+<h1>{{game.name}}</h1>
+
+<h2>Players</h2>
+<ul>
+    <li ng-repeat="player in players">
+        {{player.pid}}
+        <button ng-click="kick(player)">Kick</button>
+    </li>
+</ul>
+<button ng-click="join()">Join</button>
+<button ng-click="start()">Start game</button>

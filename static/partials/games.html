@@ -1,5 +1,7 @@
 <ul ng-repeat="game in games">
-    <li>Name: {{game.name}} (gid: {{game.gid}})</li>
+    <li>
+        <a ng-href="#/games/{{game.gid}}">{{game.name}} (gid: {{game.gid}})</a>
+    </li>
 </ul>
 <form>
     Create new game:

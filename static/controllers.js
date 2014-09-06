@@ -15,7 +15,40 @@ app.controller('GamesController', function ($scope, $http) {
     update();
 });
 
-app.controller('GameController', function ($scope, $http, $routeParams) {
+app.controller('GameLobbyController',
+               function ($scope, $http, $routeParams, $location) {
+    var gid = $routeParams.gid;
+
+    var update = function () {
+        $http.get(root + '/games/' + gid).success(function (data) {
+            $scope.game = data;
+        });
+        $http.get(root + '/games/' + gid + '/players').
+            success(function (data) {
+                $scope.players = data.players;
+            });
+    };
+
+    $scope.kick = function (player) {
+        $http.delete(root + '/games/' + gid + '/players/' + player.pid);
+        update();
+    };
+
+    $scope.join = function () {
+        $http.post(root + '/games/' + gid + '/players');
+        update();
+    };
+
+    $scope.start = function () {
+        $http.put(root + '/games/' + gid, { state: 'started' });
+        $location.path('/games/' + gid);
+    };
+
+    update();
+});
+
+app.controller('GameController',
+               function ($scope, $http, $routeParams, $location) {
     var gid = $routeParams.gid;
     var myPid = 1;
     var pids;
@@ -250,6 +283,9 @@ app.controller('GameController', function ($scope, $http, $routeParams) {
     var update = function () {
         $http.get(root + '/games/' + gid).success(function (data) {
             $scope.game = data;
+            if ($scope.game.state == 'setup') {
+                $location.path($location.path() + '/lobby');
+            }
             myPid = data.currentPlayer;
             $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
                 success(function (data) {
