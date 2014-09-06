@@ -2,6 +2,7 @@ import redis
 import random
 import collections
 import itertools
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 redis = redis.StrictRedis(decode_responses=True)
@@ -358,3 +359,36 @@ class Player:
             card = redis.lpop('games:{}:deck'.format(self.gid))
             if card:
                 redis.rpush(self.key(':hand'), card)
+
+
+class User:
+    def __init__(self, name):
+        self.name = name
+
+    def key(self, suffix=''):
+        return 'users:{}{}'.format(self.name, suffix)
+
+    @staticmethod
+    def create(name, password):
+        user = User(name)
+        pw_hash = generate_password_hash(password)
+        ok = redis.hsetnx(user.key(), 'password_hash', pw_hash)
+        if not ok:
+            return False
+        redis.hset('users:{}'.format(name), 'score', 0)
+        redis.rpush('users', name)
+        return user
+
+    def delete(self):
+        redis.delete(self.key())
+        redis.lrem('users', 0, name)
+
+    def check_password(self, password):
+        pw_hash = redis.hget(self.key(), 'password_hash')
+        return check_password_hash(pw_hash, password)
+
+    def get_score(self):
+        return int(redis.hget(self.key(), 'score'))
+
+    def increment_score(self, amount=1):
+        redis.hincrby(self.key(), 'score', amount)
