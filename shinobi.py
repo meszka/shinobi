@@ -24,15 +24,15 @@ class GameView(MethodView):
     def get(self, gid):
         game = Game(gid)
         name = game.get_name()
-        status = game.get_state()
-        current_player = game.get_current_pid()
+        state = game.get_state()
         output = {
             'gid': gid,
             'name': name,
-            'status': status,
-            'currentPlayer': current_player,
+            'state': state,
         }
-        if status == 'ended':
+        if state == 'started':
+            output['currentPlayer'] = game.get_current_pid()
+        if state == 'ended':
             output['winners'] = game.get_winner_pids()
         return jsonify(output)
 
