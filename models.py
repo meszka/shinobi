@@ -26,10 +26,11 @@ class Game:
         return [int(gid) for gid in gids]
 
     @staticmethod
-    def create(name):
+    def create(owner, name):
         gid = redis.incr('games:next')
         redis.rpush('games', gid)
         game = Game(gid)
+        redis.hset(game.key(), 'owner', owner.name)
         redis.hset(game.key(), 'name', name)
         redis.hset(game.key(), 'state', 'setup')
         return Game(gid)
@@ -79,8 +80,10 @@ class Game:
         deck_length = int(redis.llen(self.key(':deck')))
         return deck_length == 0
 
-    def create_player(self):
+    def create_player(self, user):
         pid = redis.incr(self.key(':players:next'))
+        player = Player(self.gid, pid)
+        player.set_username(user.name)
         redis.rpush(self.key(':players'), pid)
 
     def start(self):
@@ -148,6 +151,15 @@ class Player:
 
     def key(self, suffix=''):
         return 'games:{}:players:{}{}'.format(self.gid, self.pid, suffix)
+
+    def get_username(self):
+        return redis.hget(self.key(), 'user')
+
+    def set_username(self, name):
+        redis.hset(self.key(), 'user', name)
+
+    def get_user(self):
+        return User(self.name)
 
     def get_cards(self):
         cards = redis.hgetall(self.key(':cards'))
@@ -362,26 +374,26 @@ class Player:
 
 
 class User:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, username):
+        self.username = username
 
     def key(self, suffix=''):
-        return 'users:{}{}'.format(self.name, suffix)
+        return 'users:{}{}'.format(self.username, suffix)
 
     @staticmethod
-    def create(name, password):
-        user = User(name)
+    def create(username, password):
+        user = User(username)
         pw_hash = generate_password_hash(password)
         ok = redis.hsetnx(user.key(), 'password_hash', pw_hash)
         if not ok:
             return False
-        redis.hset('users:{}'.format(name), 'score', 0)
-        redis.rpush('users', name)
+        redis.hset('users:{}'.format(username), 'score', 0)
+        redis.rpush('users', username)
         return user
 
     def delete(self):
         redis.delete(self.key())
-        redis.lrem('users', 0, name)
+        redis.lrem('users', 0, self.username)
 
     def check_password(self, password):
         pw_hash = redis.hget(self.key(), 'password_hash')
