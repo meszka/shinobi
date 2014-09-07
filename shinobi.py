@@ -5,6 +5,25 @@ from models import Game, Player
 
 app = Flask(__name__)
 
+
+def authenticate(auth):
+    user = User(auth.username)
+    if not user.check_password(auth.password):
+        return None
+    return user
+
+
+def authorize(auth, user):
+    current_user = authenticate(auth)
+    return current_user.username == user.username
+
+
+def auth_response():
+    return Response(
+            'Please log in', 401,
+            {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+
 class GameListView(MethodView):
     def get(self):
         gids = Game.get_gids()
@@ -16,8 +35,11 @@ class GameListView(MethodView):
         return jsonify({'games': games})
 
     def post(self):
+        user = authenticate(request.authorization)
+        if not user:
+            return auth_response()
         game_json = request.get_json()
-        game = Game.create(game_json['name'])
+        game = Game.create(user, game_json['name'])
         return redirect(url_for('game', gid=game.gid))
 
 class GameView(MethodView):
@@ -37,9 +59,12 @@ class GameView(MethodView):
         return jsonify(output)
 
     def put(self, gid):
+        game = Game(gid)
+        if not authorize(request.authorization, game.owner):
+            return auth_response()
         game_json = request.get_json()
         if game_json['state'] == 'started':
-            Game(gid).start()
+            game.start()
             return 'game started'
 
     def delete(self, gid):
@@ -62,7 +87,10 @@ class PlayerListView(MethodView):
         return jsonify({'players': players})
 
     def post(self, gid):
-        player = Game(gid).create_player()
+        user = authenticate(request.authorization)
+        if not user:
+            return auth_response()
+        player = Game(gid).create_player(user)
         return redirect(url_for('player', gid=gid, pid=player.pid))
 
 class PlayerView(MethodView):
@@ -71,13 +99,18 @@ class PlayerView(MethodView):
         return jsonify({'gid': gid, 'pid': pid, 'cards': cards})
 
     def delete(self, gid, pid):
+        if not authorize(request.authorization, game.owner):
+            return auth_response()
         Player(gid, pid).delete()
         return ''
 
 class MoveListView(MethodView):
     def post(self, gid, pid):
-        move = request.get_json()
         player = Player(gid, pid)
+        user = player.get_user()
+        if not authorize(request.authorization, user):
+            return auth_response()
+        move = request.get_json()
         valid, errors = player.validate_move(move)
         if valid:
             messages = player.execute_move(move)
@@ -88,6 +121,9 @@ class MoveListView(MethodView):
 class HandView(MethodView):
     def get(self, gid, pid):
         player = Player(gid, pid)
+        user = player.get_user()
+        if not authorize(request.authorization, user):
+            return auth_response()
         hand =  player.get_hand()
         return jsonify({'hand': hand})
 
