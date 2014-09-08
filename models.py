@@ -399,6 +399,10 @@ class User:
         pw_hash = redis.hget(self.key(), 'password_hash')
         return check_password_hash(pw_hash, password)
 
+    def set_password(self, password):
+        pw_hash = generate_password_hash(password)
+        return redis.hset(user.key(), 'password_hash', pw_hash)
+
     def get_score(self):
         return int(redis.hget(self.key(), 'score'))
 
