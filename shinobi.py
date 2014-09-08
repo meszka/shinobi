@@ -40,7 +40,14 @@ class GameListView(MethodView):
             return auth_response()
         game_json = request.get_json()
         game = Game.create(user, game_json['name'])
-        return redirect(url_for('game', gid=game.gid))
+        response_data = {
+            'gid': game.gid,
+            'name': game.name,
+            'state': game.state,
+        }
+        return Response(
+                jsonify(response_data), 201,
+                {'Location': url_for('game', gid=game.gid)})
 
 class GameView(MethodView):
     def get(self, gid):
@@ -65,11 +72,11 @@ class GameView(MethodView):
         game_json = request.get_json()
         if game_json['state'] == 'started':
             game.start()
-            return 'game started'
+            return '', 204
 
     def delete(self, gid):
         Game(gid).delete()
-        return ''
+        return '', 204
 
 class PlayerListView(MethodView):
     def get(self, gid):
@@ -91,7 +98,14 @@ class PlayerListView(MethodView):
         if not user:
             return auth_response()
         player = Game(gid).create_player(user)
-        return redirect(url_for('player', gid=gid, pid=player.pid))
+        response_data = {
+            'gid': player.gid,
+            'pid': player.pid,
+            'cards': player.get_cards()
+        }
+        return Response(
+                jsonify(response_data), 201,
+                {'Location': url_for('player', gid=gid, pid=player.pid)})
 
 class PlayerView(MethodView):
     def get(self, gid, pid):
@@ -116,7 +130,7 @@ class MoveListView(MethodView):
             messages = player.execute_move(move)
             return jsonify({'status': 'success', 'messages': messages})
         else:
-            return jsonify({'status': 'error', 'messages': errors})
+            return jsonify({'status': 'error', 'messages': errors}), 400
 
 class HandView(MethodView):
     def get(self, gid, pid):
