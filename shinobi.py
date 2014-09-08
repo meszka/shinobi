@@ -134,6 +134,36 @@ class NotificationView(MethodView):
                         mimetype='text/event-stream')
 
 
+class UserListView(MethodView):
+    def post(self):
+        user_data = get_json()
+        user = User.create(user_data['username'], user_data['password'])
+        if not user:
+            response_data = {status: 'error',
+                             messages: 'Username already taken'}
+            return jsonify(response_data), 400
+        response_data = {'username': user.username, 'score:' user.get_score()}
+        return Response(
+                jsonify(response_data), 201,
+                {'Location': url_for('user', username=user.username)})
+
+
+class UserView(MethodView):
+    def get(self, username):
+        user = User(username)
+        return jsonify({'username': user.username, 'score': user.get_score()})
+
+    def put(self, username):
+        user_data = get_json()
+        user = User(username)
+        if user_data.username != user.username:
+            response_data = {status: 'error',
+                             messages: 'Cannot change username'}
+            return jsonify(response_data), 400
+        user.set_password(user_data['password'])
+        return '', 204
+
+
 app.add_url_rule('/games', view_func=GameListView.as_view('game_list'))
 app.add_url_rule('/games/<int:gid>', view_func=GameView.as_view('game'))
 app.add_url_rule('/games/<int:gid>/players',
@@ -146,6 +176,8 @@ app.add_url_rule('/games/<int:gid>/players/<int:pid>/hand',
                  view_func=HandView.as_view('hand'))
 app.add_url_rule('/games/<int:gid>/notification',
                  view_func=NotificationView.as_view('notification'))
+app.add_url_rule('/users/', view_func=UserListView.as_view('user_list'))
+app.add_url_rule('/users/<str:username>', view_func=UserView.as_view('user'))
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True)
