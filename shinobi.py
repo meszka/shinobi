@@ -72,7 +72,8 @@ class GameView(MethodView):
 
     def put(self, gid):
         game = Game(gid)
-        if not authorize(request.authorization, game.owner):
+        owner = game.get_owner()
+        if not authorize(request.authorization, owner):
             return auth_response()
         game_json = request.get_json()
         if game_json['state'] == 'started':
@@ -92,7 +93,8 @@ class PlayerListView(MethodView):
         for pid in pids:
             player = Player(gid, pid)
             cards = player.get_cards()
-            player = {'pid': pid, 'cards': cards}
+            username = player.get_username()
+            player = {'pid': pid, 'cards': cards, 'username': username}
             if game_state == 'ended':
                 player['color'] = player.get_color()
             players.append(player)
@@ -106,6 +108,7 @@ class PlayerListView(MethodView):
         response_data = {
             'gid': player.gid,
             'pid': player.pid,
+            'username': player.get_username(),
             'cards': player.get_cards()
         }
         return Response(
@@ -118,7 +121,9 @@ class PlayerView(MethodView):
         return jsonify({'gid': gid, 'pid': pid, 'cards': cards})
 
     def delete(self, gid, pid):
-        if not authorize(request.authorization, game.owner):
+        game = Game(gid)
+        owner = game.get_owner()
+        if not authorize(request.authorization, owner):
             return auth_response()
         Player(gid, pid).delete()
         return ''

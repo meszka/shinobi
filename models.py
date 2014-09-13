@@ -45,6 +45,9 @@ class Game:
     def get_owner_username(self):
         return redis.hget(self.key(), 'owner')
 
+    def get_owner(self):
+        return User(self.get_owner_username())
+
     def get_state(self):
         return redis.hget(self.key(), 'state')
 
@@ -86,8 +89,9 @@ class Game:
     def create_player(self, user):
         pid = redis.incr(self.key(':players:next'))
         player = Player(self.gid, pid)
-        player.set_username(user.name)
+        player.set_username(user.username)
         redis.rpush(self.key(':players'), pid)
+        return player
 
     def start(self):
         self.init_deck()
@@ -158,11 +162,11 @@ class Player:
     def get_username(self):
         return redis.hget(self.key(), 'user')
 
-    def set_username(self, name):
-        redis.hset(self.key(), 'user', name)
+    def set_username(self, username):
+        redis.hset(self.key(), 'user', username)
 
     def get_user(self):
-        return User(self.name)
+        return User(self.get_username())
 
     def get_cards(self):
         cards = redis.hgetall(self.key(':cards'))
