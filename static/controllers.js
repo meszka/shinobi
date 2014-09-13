@@ -1,5 +1,20 @@
 var root = 'http://localhost:5000';
 
+app.controller('LoginController', function ($scope, $http) {
+    $scope.logIn = function () {
+        var auth = btoa($scope.user.username + ':' + $scope.user.password);
+        $http.defaults.headers.common.Authorization = 'Basic ' + auth;
+        $scope.username = $scope.user.username;
+    };
+    $scope.logOut = function () {
+        $scope.username = undefined;
+        $scope.user = {};
+    };
+    $scope.loggedIn = function () {
+        return $scope.username !== undefined && $scope.username !== null;
+    };
+});
+
 app.controller('GamesController', function ($scope, $http) {
     var update = function () {
         $http.get(root + '/games').success(function (data) {
