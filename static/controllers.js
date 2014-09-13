@@ -23,8 +23,9 @@ app.controller('GamesController', function ($scope, $http) {
     };
 
     $scope.createGame = function (game) {
-        $http.post(root + '/games', game);
-        update();
+        $http.post(root + '/games', game).success(function () {
+            update();
+        });
     };
 
     update();
