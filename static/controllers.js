@@ -13,6 +13,15 @@ app.controller('LoginController', function ($scope, $http) {
     $scope.loggedIn = function () {
         return $scope.username !== undefined && $scope.username !== null;
     };
+    $scope.create = function () {
+        $http.post(root + '/users', $scope.user).success(function () {
+            $scope.logIn();
+        }).error(function (data) {
+            if (data.messages !== undefined) {
+                alert(data.messages.join("\n"));
+            }
+        });
+    };
 });
 
 app.controller('GamesController', function ($scope, $http) {
