@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, redirect, url_for, Response
 from flask.views import MethodView
 
-from models import Game, Player
+from models import Game, Player, User
 
 app = Flask(__name__)
 
@@ -156,7 +156,7 @@ class UserListView(MethodView):
             response_data = {status: 'error',
                              messages: 'Username already taken'}
             return jsonify(response_data), 400
-        response_data = {'username': user.username, 'score:' user.get_score()}
+        response_data = {'username': user.username, 'score': user.get_score()}
         return Response(
                 jsonify(response_data), 201,
                 {'Location': url_for('user', username=user.username)})
@@ -191,7 +191,7 @@ app.add_url_rule('/games/<int:gid>/players/<int:pid>/hand',
 app.add_url_rule('/games/<int:gid>/notification',
                  view_func=NotificationView.as_view('notification'))
 app.add_url_rule('/users/', view_func=UserListView.as_view('user_list'))
-app.add_url_rule('/users/<str:username>', view_func=UserView.as_view('user'))
+app.add_url_rule('/users/<username>', view_func=UserView.as_view('user'))
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True)
