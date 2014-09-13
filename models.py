@@ -367,7 +367,7 @@ class Player:
         return 'attacked {} in {}'.format(color, to_pid)
 
     def get_color(self):
-        redis.hget(self.key(), 'color')
+        return redis.hget(self.key(), 'color')
 
     def set_color(self, color):
         redis.hset(self.key(), 'color', color)
