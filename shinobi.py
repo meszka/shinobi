@@ -130,6 +130,10 @@ class PlayerView(MethodView):
 
 class MoveListView(MethodView):
     def post(self, gid, pid):
+        game = Game(gid)
+        if not game.get_current_pid()  == pid:
+            return jsonify({'status': 'error',
+                            'messages': ['It is not your turn']}), 400
         player = Player(gid, pid)
         user = player.get_user()
         if not authorize(request.authorization, user):
