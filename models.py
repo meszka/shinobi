@@ -350,7 +350,7 @@ class Player:
 
     def ninja(self, color, to_pid):
         to_player = Player(self.gid, to_pid)
-        redis.lrem(self.key(':hand'), 'ninja', 1)
+        redis.lrem(self.key(':hand'), 1, 'ninja')
         redis.hincrby(to_player.key(':cards'), color, -1)
         return 'killed {} in {}'.format(color, to_pid)
 
