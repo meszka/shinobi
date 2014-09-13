@@ -30,7 +30,7 @@ class Game:
         gid = redis.incr('games:next')
         redis.rpush('games', gid)
         game = Game(gid)
-        redis.hset(game.key(), 'owner', owner.name)
+        redis.hset(game.key(), 'owner', owner.username)
         redis.hset(game.key(), 'name', name)
         redis.hset(game.key(), 'state', 'setup')
         return Game(gid)
@@ -41,6 +41,9 @@ class Game:
 
     def get_name(self):
         return redis.hget(self.key(), 'name')
+
+    def get_owner_username(self):
+        return redis.hget(self.key(), 'owner')
 
     def get_state(self):
         return redis.hget(self.key(), 'state')
@@ -397,6 +400,8 @@ class User:
 
     def check_password(self, password):
         pw_hash = redis.hget(self.key(), 'password_hash')
+        if not pw_hash:
+            return False
         return check_password_hash(pw_hash, password)
 
     def set_password(self, password):

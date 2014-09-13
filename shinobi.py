@@ -7,6 +7,8 @@ app = Flask(__name__)
 
 
 def authenticate(auth):
+    if not auth:
+        return None
     user = User(auth.username)
     if not user.check_password(auth.password):
         return None
@@ -42,8 +44,9 @@ class GameListView(MethodView):
         game = Game.create(user, game_json['name'])
         response_data = {
             'gid': game.gid,
-            'name': game.name,
-            'state': game.state,
+            'name': game.get_name(),
+            'state': game.get_state(),
+            'owner': game.get_owner_username(),
         }
         return Response(
                 jsonify(response_data), 201,
@@ -54,10 +57,12 @@ class GameView(MethodView):
         game = Game(gid)
         name = game.get_name()
         state = game.get_state()
+        owner = game.get_owner_username()
         output = {
             'gid': gid,
             'name': name,
             'state': state,
+            'owner': owner,
         }
         if state == 'started':
             output['currentPlayer'] = game.get_current_pid()
