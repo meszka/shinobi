@@ -5,6 +5,7 @@ app.controller('LoginController', function ($scope, $http, $rootScope) {
         var auth = btoa($scope.user.username + ':' + $scope.user.password);
         $http.defaults.headers.common.Authorization = 'Basic ' + auth;
         $rootScope.username = $scope.user.username;
+        $rootScope.$broadcast('updateEvent');
     };
     $scope.logOut = function () {
         $rootScope.username = undefined;
@@ -338,6 +339,10 @@ app.controller('GameController',
     $scope.update = update;
 
     update();
+
+    $scope.$on('updateEvent', function (event, args) {
+        update();
+    });
 
     var source = new EventSource(root + '/games/' + gid + '/notification');
     source.onmessage = function (event) {
