@@ -321,6 +321,7 @@ app.controller('GameController',
                     if (player.username === $rootScope.username) {
                         myPid = player.pid;
                         $scope.myPid = player.pid;
+                        $scope.myColor = player.color;
                         console.log("I'm player " +  myPid);
                     }
                     if (myPid === $scope.game.currentPlayer) {
