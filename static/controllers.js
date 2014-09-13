@@ -1,17 +1,18 @@
 var root = 'http://localhost:5000';
 
-app.controller('LoginController', function ($scope, $http) {
+app.controller('LoginController', function ($scope, $http, $rootScope) {
     $scope.logIn = function () {
         var auth = btoa($scope.user.username + ':' + $scope.user.password);
         $http.defaults.headers.common.Authorization = 'Basic ' + auth;
-        $scope.username = $scope.user.username;
+        $rootScope.username = $scope.user.username;
     };
     $scope.logOut = function () {
-        $scope.username = undefined;
+        $rootScope.username = undefined;
         $scope.user = {};
     };
     $scope.loggedIn = function () {
-        return $scope.username !== undefined && $scope.username !== null;
+        return $rootScope.username !== undefined &&
+               $rootScope.username !== null;
     };
     $scope.create = function () {
         $http.post(root + '/users', $scope.user).success(function () {
@@ -32,9 +33,7 @@ app.controller('GamesController', function ($scope, $http) {
     };
 
     $scope.createGame = function (game) {
-        $http.post(root + '/games', game).success(function () {
-            update();
-        });
+        $http.post(root + '/games', game).success(update);
     };
 
     update();
@@ -55,13 +54,12 @@ app.controller('GameLobbyController',
     };
 
     $scope.kick = function (player) {
-        $http.delete(root + '/games/' + gid + '/players/' + player.pid);
-        update();
+        $http.delete(root + '/games/' + gid + '/players/' + player.pid).
+            success(update);
     };
 
     $scope.join = function () {
-        $http.post(root + '/games/' + gid + '/players');
-        update();
+        $http.post(root + '/games/' + gid + '/players').success(update);
     };
 
     $scope.start = function () {
@@ -73,9 +71,9 @@ app.controller('GameLobbyController',
 });
 
 app.controller('GameController',
-               function ($scope, $http, $routeParams, $location) {
+               function ($scope, $http, $routeParams, $location, $rootScope) {
     var gid = $routeParams.gid;
-    var myPid = 1;
+    var myPid;
     var pids;
     var selection = null;
     var move = {};
@@ -234,7 +232,7 @@ app.controller('GameController',
 
     states.disabled = {};
 
-    var currentState = states.first1;
+    var currentState = states.disabled;
 
     $scope.messages = []
 
@@ -305,22 +303,45 @@ app.controller('GameController',
         switchState(states.first1);
     };
 
+    $scope.myTurn = function () {
+        return $scope.game && myPid === $scope.game.currentPlayer;
+    };
+
+    // TODO: break into init and update (?)
     var update = function () {
         $http.get(root + '/games/' + gid).success(function (data) {
             $scope.game = data;
             if ($scope.game.state == 'setup') {
                 $location.path($location.path() + '/lobby');
             }
-            myPid = data.currentPlayer;
-            $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
-                success(function (data) {
-                    $scope.hand = data.hand;
+            $http.get(root + '/games/' + gid + '/players').success(function (data) {
+                $scope.players = data.players;
+                data.players.forEach(function (player) {
+                    if (player.username === $rootScope.username) {
+                        myPid = player.pid;
+                        $scope.myPid = player.pid;
+                        console.log("I'm player " +  myPid);
+                    }
+                    if (myPid === $scope.game.currentPlayer) {
+                        switchState(states.first1);
+                    }
                 });
-        });
-        $http.get(root + '/games/' + gid + '/players').success(function (data) {
-            $scope.players = data.players;
+                if (myPid !== undefined) {
+                    $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
+                        success(function (data) {
+                            $scope.hand = data.hand;
+                        });
+                }
+            });
         });
     };
+    $scope.update = update;
 
     update();
+
+    var source = new EventSource(root + '/games/' + gid + '/notification');
+    source.onmessage = function (event) {
+        console.log(event.data);
+        update();
+    };
 });

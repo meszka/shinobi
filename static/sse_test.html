@@ -1,0 +1,8 @@
+<script>
+var source = new EventSource('/games/7/notification');
+source.onmessage = function (event) {
+    document.getElementById("log").innerHTML += event.data;
+};
+</script>
+
+<p id="log"></p>
