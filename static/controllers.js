@@ -64,8 +64,10 @@ app.controller('GameLobbyController',
     };
 
     $scope.start = function () {
-        $http.put(root + '/games/' + gid, { state: 'started' });
-        $location.path('/games/' + gid);
+        $http.put(root + '/games/' + gid, { state: 'started' }).
+            success(function () {
+                $location.path('/games/' + gid);
+            });
     };
 
     update();

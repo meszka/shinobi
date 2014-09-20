@@ -1,6 +1,6 @@
 var app = angular.module('Shinobi', ['ngRoute']);
 
-app.factory('notifyInterceptor', function($log) {
+app.factory('notifyInterceptor', function($q) {
     var statusToType = function (status) {
         if (status / 100 === 2) {
             return 'success';
@@ -25,7 +25,7 @@ app.factory('notifyInterceptor', function($log) {
         },
         'responseError': function(response) {
             showMessages(response);
-            return response;
+            return $q.reject(response);
         },
     };
 });
