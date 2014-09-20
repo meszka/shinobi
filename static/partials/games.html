@@ -1,10 +1,22 @@
-<ul ng-repeat="game in games">
-    <li>
-        <a ng-href="#/games/{{game.gid}}">{{game.name}} (gid: {{game.gid}})</a>
-    </li>
-</ul>
+<h1>Games</h1>
+
 <form>
     Create new game:
     <input type="text" ng-model="newGame.name">
     <button ng-click="createGame(newGame)">Create</button>
 </form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Game</th>
+            <th>Owner</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr ng-repeat="game in games">
+            <td><a ng-href="#/games/{{game.gid}}">{{game.name}}</a></td>
+            <td>{{game.owner}}</td>
+        </tr>
+    </tbody>
+</table>
