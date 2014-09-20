@@ -50,3 +50,7 @@
 .card.ninja {
     background-color: #777777;
 }
+
+.notifications {
+    min-width: 30%;
+}

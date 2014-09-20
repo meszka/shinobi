@@ -5,13 +5,17 @@
     <title>Shinobi</title>
     <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" type="text/css" href="bower_components/bootstrap-notify/css/bootstrap-notify.css" />
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.22/angular.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.22/angular-route.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="bower_components/bootstrap-notify/js/bootstrap-notify.js"></script>
     <script src="app.js"></script>
     <script src="controllers.js"></script>
 </head>
 <body>
+    <div class="notifications top-right"></div>
     <div ng-controller="LoginController">
         <div ng-show="loggedIn()">
             <p>Logged in as: {{username}}
