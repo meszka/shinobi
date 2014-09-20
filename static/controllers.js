@@ -333,6 +333,7 @@ app.controller('GameController',
                 if (myPid !== undefined) {
                     $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
                         success(function (data) {
+                            data.hand.sort();
                             $scope.hand = data.hand;
                         });
                 }
