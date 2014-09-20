@@ -38,10 +38,16 @@ app.config(function($routeProvider, $httpProvider) {
         }).
         when('/games/:gid', {
             templateUrl: 'partials/game.html',
-            controller: 'GameController'}).
+            controller: 'GameController'
+        }).
         when('/games/:gid/lobby', {
             templateUrl: 'partials/game_lobby.html',
-            controller: 'GameLobbyController'}).
+            controller: 'GameLobbyController'
+        }).
+        when('/users', {
+            templateUrl: 'partials/users.html',
+            controller: 'UsersController'
+        }).
         otherwise({
             redirectTo: '/games'
         });

@@ -26,6 +26,12 @@ app.controller('LoginController', function ($scope, $http, $rootScope) {
     };
 });
 
+app.controller('UsersController', function ($scope, $http) {
+    $http.get(root + '/users').success(function (data) {
+        $scope.users = data.users;
+    });
+});
+
 app.controller('GamesController', function ($scope, $http) {
     var update = function () {
         $http.get(root + '/games').success(function (data) {
