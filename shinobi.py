@@ -33,9 +33,8 @@ class GameListView(MethodView):
         gids = Game.get_gids()
         games = []
         for gid in gids:
-            name = Game(gid).get_name()
-            game = {'gid': gid, 'name': name}
-            games.append(game)
+            game_data = Game(gid).get_data()
+            games.append(game_data)
         return jsonify({'games': games})
 
     def post(self):
@@ -44,33 +43,21 @@ class GameListView(MethodView):
             return auth_response()
         game_json = request.get_json()
         game = Game.create(user, game_json['name'])
-        response_data = {
-            'gid': game.gid,
-            'name': game.get_name(),
-            'state': game.get_state(),
-            'owner': game.get_owner_username(),
-        }
+        response_data = game.get_data()
         return Response(
                 jsonify(response_data), 201,
                 {'Location': url_for('game', gid=game.gid)})
 
+
 class GameView(MethodView):
     def get(self, gid):
         game = Game(gid)
-        name = game.get_name()
-        state = game.get_state()
-        owner = game.get_owner_username()
-        output = {
-            'gid': gid,
-            'name': name,
-            'state': state,
-            'owner': owner,
-        }
+        response_data = game.get_data()
         if state == 'started':
-            output['currentPlayer'] = game.get_current_pid()
+            response_data['currentPlayer'] = game.get_current_pid()
         if state == 'ended':
-            output['winners'] = game.get_winner_pids()
-        return jsonify(output)
+            response_data['winners'] = game.get_winner_pids()
+        return jsonify(response_data)
 
     def put(self, gid):
         game = Game(gid)
@@ -91,6 +78,7 @@ class GameView(MethodView):
     def delete(self, gid):
         Game(gid).delete()
         return '', 204
+
 
 class PlayerListView(MethodView):
     def get(self, gid):
@@ -128,15 +116,11 @@ class PlayerListView(MethodView):
             }
             return jsonify(response_data), 400
         player = game.create_player(user)
-        response_data = {
-            'gid': player.gid,
-            'pid': player.pid,
-            'username': player.get_username(),
-            'cards': player.get_cards()
-        }
+        response_data = player.get_data()
         return Response(
                 jsonify(response_data), 201,
                 {'Location': url_for('player', gid=gid, pid=player.pid)})
+
 
 class PlayerView(MethodView):
     def get(self, gid, pid):
@@ -145,7 +129,7 @@ class PlayerView(MethodView):
             return auth_response()
         player = Player(gid, pid)
         cards = player.get_cards()
-        response_data = {'gid': gid, 'pid': pid, 'cards': cards}
+        response_data = player.get_data()
         if user.username == player.get_username():
             response_data['color'] = player.get_color()
         return jsonify(response_data)
@@ -157,6 +141,7 @@ class PlayerView(MethodView):
             return auth_response()
         Player(gid, pid).delete()
         return ''
+
 
 class MoveListView(MethodView):
     def post(self, gid, pid):
@@ -175,6 +160,7 @@ class MoveListView(MethodView):
         else:
             return jsonify({'messages': errors}), 400
 
+
 class HandView(MethodView):
     def get(self, gid, pid):
         player = Player(gid, pid)
@@ -183,6 +169,7 @@ class HandView(MethodView):
             return auth_response()
         hand =  player.get_hand()
         return jsonify({'hand': hand})
+
 
 class NotificationView(MethodView):
     def get(self, gid):
@@ -198,7 +185,7 @@ class UserListView(MethodView):
         if not user:
             response_data = {'messages': ['Username already taken']}
             return jsonify(response_data), 400
-        response_data = {'username': user.username, 'score': user.get_score()}
+        response_data = user.get_data()
         return Response(
                 jsonify(response_data), 201,
                 {'Location': url_for('user', username=user.username)})
@@ -207,7 +194,7 @@ class UserListView(MethodView):
 class UserView(MethodView):
     def get(self, username):
         user = User(username)
-        return jsonify({'username': user.username, 'score': user.get_score()})
+        return jsonify(user.get_data())
 
     def put(self, username):
         user_data = get_json()

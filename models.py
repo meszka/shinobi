@@ -93,6 +93,15 @@ class Game:
         redis.rpush(self.key(':players'), pid)
         return player
 
+    def get_data(self):
+        return {
+            'gid': self.gid,
+            'name': self.get_name(),
+            'state': self.get_state(),
+            'owner': self.get_owner_username(),
+        }
+
+
     def start(self):
         self.init_deck()
         colors = ['yellow', 'red', 'purple', 'green', 'blue']
@@ -176,6 +185,14 @@ class Player:
 
     def get_hand(self):
         return redis.lrange(self.key(':hand'), 0, -1)
+
+    def get_data(self):
+        return {
+            'gid': self.gid,
+            'pid': self.pid,
+            'username': self.get_username(),
+            'cards': self.get_cards()
+        }
 
     def delete(self):
         game = Game(self.gid)
@@ -417,3 +434,6 @@ class User:
 
     def increment_score(self, amount=1):
         redis.hincrby(self.key(), 'score', amount)
+
+    def get_data(self):
+        return {'username': self.username, 'score': self.get_score()}
