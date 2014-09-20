@@ -16,19 +16,25 @@
     <script src="controllers.js"></script>
 </head>
 <body>
-    <div class="notifications top-right"></div>
-    <div ng-controller="LoginController">
-        <div ng-show="loggedIn()">
-            <p>Logged in as: {{username}}
-            <button ng-click="logOut()">Log out</button></p>
+    <div class="navbar navbar-default navbar-static-top">
+        <div class="container-fluid">
+            <div ng-controller="LoginController">
+                <div ng-show="loggedIn()" class="navbar-form">
+                    <p>Logged in as: {{username}}
+                    <button ng-click="logOut()">Log out</button></p>
+                </div>
+                <form ng-hide="loggedIn()" class="navbar-form">
+                    Username: <input type="text" ng-model="user.username">
+                    Password: <input type="password" ng-model="user.password">
+                    <button ng-click="logIn()">Log in</button>
+                    <button ng-click="create()">Create new user</button>
+                </form>
+            </div>
         </div>
-        <form ng-hide="loggedIn()">
-            Username: <input type="text" ng-model="user.username">
-            Password: <input type="password" ng-model="user.password">
-            <button ng-click="logIn()">Log in</button>
-            <button ng-click="create()">Create new user</button>
-        </form>
     </div>
-    <div ng-view></div>
+    <div class="container-fluid">
+        <div class="notifications top-right"></div>
+        <div ng-view></div>
+    </div>
 </body>
 </html>
