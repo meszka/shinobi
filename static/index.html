@@ -18,18 +18,23 @@
 <body>
     <div class="navbar navbar-default navbar-static-top">
         <div class="container-fluid">
+            <ul class="nav navbar-nav navbar-left">
+                <li><a ng-href="#/games">Games</a></li>
+                <li><a ng-href="#/users">Users</a></li>
+            </ul>
             <div ng-controller="LoginController">
-                <div ng-show="loggedIn()" class="navbar-form">
+                <div ng-show="loggedIn()" class="navbar-form pull-right">
                     <p>Logged in as: {{username}}
                     <button ng-click="logOut()">Log out</button></p>
                 </div>
-                <form ng-hide="loggedIn()" class="navbar-form">
+                <form ng-hide="loggedIn()" class="navbar-form pull-right">
                     Username: <input type="text" ng-model="user.username">
                     Password: <input type="password" ng-model="user.password">
                     <button ng-click="logIn()">Log in</button>
                     <button ng-click="create()">Create new user</button>
                 </form>
             </div>
+
         </div>
     </div>
     <div class="container-fluid">
