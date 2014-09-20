@@ -30,12 +30,9 @@ def auth_response():
 
 class GameListView(MethodView):
     def get(self):
-        gids = Game.get_gids()
-        games = []
-        for gid in gids:
-            game_data = Game(gid).get_data()
-            games.append(game_data)
-        return jsonify({'games': games})
+        games = Game.get_all()
+        games_data = [game.get_data() for game in games]
+        return jsonify({'games': games_data})
 
     def post(self):
         user = authenticate(request.authorization)
@@ -179,6 +176,11 @@ class NotificationView(MethodView):
 
 
 class UserListView(MethodView):
+    def get(self):
+        users = User.get_all()
+        users_data = [user.get_data() for user in users]
+        return jsonify({'users': users_data})
+
     def post(self):
         user_data = request.get_json()
         user = User.create(user_data['username'], user_data['password'])

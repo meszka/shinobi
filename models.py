@@ -26,6 +26,10 @@ class Game:
         return [int(gid) for gid in gids]
 
     @staticmethod
+    def get_all():
+        return [Game(gid) for gid in Game.get_gids()]
+
+    @staticmethod
     def create(owner, name):
         gid = redis.incr('games:next')
         redis.rpush('games', gid)
@@ -414,6 +418,14 @@ class User:
         redis.hset('users:{}'.format(username), 'score', 0)
         redis.rpush('users', username)
         return user
+
+    @staticmethod
+    def get_usernames():
+        return redis.lrange('users', 0, -1)
+
+    @staticmethod
+    def get_all():
+        return [User(username) for username in User.get_usernames()]
 
     def delete(self):
         redis.delete(self.key())
