@@ -76,6 +76,18 @@ class GameView(MethodView):
         if not authorize(request.authorization, owner):
             return auth_response()
         game_json = request.get_json()
+        if game.get_state() != 'setup':
+            response_data = {
+                'status': 'error',
+                'messages': ['Game must be in setup state'],
+            }
+            return jsonify(response_data), 400
+        if len(game.get_pids()) < 3:
+            response_data = {
+                'status': 'error',
+                'messages': ['Game must have at least 3 players'],
+            }
+            return jsonify(response_data), 400
         if game_json['state'] == 'started':
             game.start()
             return '', 204
@@ -107,7 +119,21 @@ class PlayerListView(MethodView):
         user = authenticate(request.authorization)
         if not user:
             return auth_response()
-        player = Game(gid).create_player(user)
+        game = Game(gid)
+        players = game.get_players()
+        if len(players) >= 5:
+            response_data = {
+                'status': 'error',
+                'messages': ['There cannot be more than 5 players in a game']
+            }
+            return jsonify(response_data), 400
+        if any([p for p in players if p.get_username() == user.username]):
+            response_data = {
+                'status': 'error',
+                'messages': ['You are already in this game']
+            }
+            return jsonify(response_data), 400
+        player = game.create_player(user)
         response_data = {
             'gid': player.gid,
             'pid': player.pid,
