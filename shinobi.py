@@ -77,16 +77,10 @@ class GameView(MethodView):
             return auth_response()
         game_json = request.get_json()
         if game.get_state() != 'setup':
-            response_data = {
-                'status': 'error',
-                'messages': ['Game must be in setup state'],
-            }
+            response_data = {'messages': ['Game must be in setup state']}
             return jsonify(response_data), 400
         if len(game.get_pids()) < 3:
-            response_data = {
-                'status': 'error',
-                'messages': ['Game must have at least 3 players'],
-            }
+            response_data = {'messages': ['Game must have at least 3 players']}
             return jsonify(response_data), 400
         if game_json['state'] == 'started':
             game.start()
@@ -123,13 +117,11 @@ class PlayerListView(MethodView):
         players = game.get_players()
         if len(players) >= 5:
             response_data = {
-                'status': 'error',
                 'messages': ['There cannot be more than 5 players in a game']
             }
             return jsonify(response_data), 400
         if any([p for p in players if p.get_username() == user.username]):
             response_data = {
-                'status': 'error',
                 'messages': ['You are already in this game']
             }
             return jsonify(response_data), 400
@@ -168,8 +160,7 @@ class MoveListView(MethodView):
     def post(self, gid, pid):
         game = Game(gid)
         if not game.get_current_pid()  == pid:
-            return jsonify({'status': 'error',
-                            'messages': ['It is not your turn']}), 400
+            return jsonify({'messages': ['It is not your turn']}), 400
         player = Player(gid, pid)
         user = player.get_user()
         if not authorize(request.authorization, user):
@@ -178,9 +169,9 @@ class MoveListView(MethodView):
         valid, errors = player.validate_move(move)
         if valid:
             messages = player.execute_move(move)
-            return jsonify({'status': 'success', 'messages': messages})
+            return jsonify({'messages': messages})
         else:
-            return jsonify({'status': 'error', 'messages': errors}), 400
+            return jsonify({'messages': errors}), 400
 
 class HandView(MethodView):
     def get(self, gid, pid):
@@ -203,8 +194,7 @@ class UserListView(MethodView):
         user_data = request.get_json()
         user = User.create(user_data['username'], user_data['password'])
         if not user:
-            response_data = {'status': 'error',
-                             'messages': ['Username already taken']}
+            response_data = {'messages': ['Username already taken']}
             return jsonify(response_data), 400
         response_data = {'username': user.username, 'score': user.get_score()}
         return Response(
@@ -221,8 +211,7 @@ class UserView(MethodView):
         user_data = get_json()
         user = User(username)
         if user_data.username != user.username:
-            response_data = {'status': 'error',
-                             'messages': ['Cannot change username']}
+            response_data = {'messages': ['Cannot change username']}
             return jsonify(response_data), 400
         user.set_password(user_data['password'])
         return '', 204
