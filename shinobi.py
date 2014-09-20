@@ -17,6 +17,8 @@ def authenticate(auth):
 
 def authorize(auth, user):
     current_user = authenticate(auth)
+    if not current_user:
+        return None
     return current_user.username == user.username
 
 
