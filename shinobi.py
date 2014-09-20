@@ -49,12 +49,12 @@ class GameListView(MethodView):
 class GameView(MethodView):
     def get(self, gid):
         game = Game(gid)
-        response_data = game.get_data()
-        if state == 'started':
-            response_data['currentPlayer'] = game.get_current_pid()
-        if state == 'ended':
-            response_data['winners'] = game.get_winner_pids()
-        return jsonify(response_data)
+        game_data = game.get_data()
+        if game_data['state'] == 'started':
+            game_data['currentPlayer'] = game.get_current_pid()
+        if game_data['state'] == 'ended':
+            game_data['winners'] = game.get_winner_pids()
+        return jsonify(game_data)
 
     def put(self, gid):
         game = Game(gid)
