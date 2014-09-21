@@ -49,6 +49,8 @@ class GameListView(MethodView):
 class GameView(MethodView):
     def get(self, gid):
         game = Game(gid)
+        if not game.exists():
+            return '', 404
         game_data = game.get_data()
         if game_data['state'] == 'started':
             game_data['currentPlayer'] = game.get_current_pid()
@@ -90,7 +92,7 @@ class PlayerListView(MethodView):
             player = Player(gid, pid)
             cards = player.get_cards()
             username = player.get_username()
-            player_data = {'pid': pid, 'cards': cards, 'username': username}
+            player_data = playere.get_data()
             if (user and username == user.username) or game_state == 'ended':
                 player_data['color'] = player.get_color()
             players.append(player_data)
@@ -125,6 +127,8 @@ class PlayerView(MethodView):
         if not user:
             return auth_response()
         player = Player(gid, pid)
+        if not player.exists():
+            return '', 404
         cards = player.get_cards()
         response_data = player.get_data()
         if user.username == player.get_username():
@@ -143,7 +147,7 @@ class PlayerView(MethodView):
 class MoveListView(MethodView):
     def post(self, gid, pid):
         game = Game(gid)
-        if not game.get_current_pid()  == pid:
+        if not game.get_current_pid() == pid:
             return jsonify({'messages': ['It is not your turn']}), 400
         player = Player(gid, pid)
         user = player.get_user()

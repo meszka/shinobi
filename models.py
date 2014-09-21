@@ -39,6 +39,9 @@ class Game:
         redis.hset(game.key(), 'state', 'setup')
         return Game(gid)
 
+    def exists(self):
+        return self.get_name() is not None
+
     def delete(self):
         redis.lrem('games', 0, self.gid)
         redis.delete(self.key())
@@ -104,7 +107,6 @@ class Game:
             'state': self.get_state(),
             'owner': self.get_owner_username(),
         }
-
 
     def start(self):
         self.init_deck()
@@ -197,6 +199,9 @@ class Player:
             'username': self.get_username(),
             'cards': self.get_cards()
         }
+
+    def exists(self):
+        return self.get_username() is not None
 
     def delete(self):
         game = Game(self.gid)
