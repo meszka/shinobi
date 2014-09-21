@@ -200,6 +200,8 @@ class UserListView(MethodView):
 class UserView(MethodView):
     def get(self, username):
         user = User(username)
+        if not user.exists():
+            return '', 404
         return jsonify(user.get_data())
 
     def put(self, username):
