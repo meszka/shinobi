@@ -92,7 +92,7 @@ class PlayerListView(MethodView):
             player = Player(gid, pid)
             cards = player.get_cards()
             username = player.get_username()
-            player_data = playere.get_data()
+            player_data = player.get_data()
             if (user and username == user.username) or game_state == 'ended':
                 player_data['color'] = player.get_color()
             players.append(player_data)
@@ -141,7 +141,7 @@ class PlayerView(MethodView):
         if not authorize(request.authorization, owner):
             return auth_response()
         Player(gid, pid).delete()
-        return ''
+        return '', 204
 
 
 class MoveListView(MethodView):
