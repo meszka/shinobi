@@ -13,7 +13,7 @@ URI                              GET POST PUT DELETE
 /games/{gid}/players/{pid}       X            X
 /games/{gid}/players/{pid}/hand  X
 /games/{gid}/players/{pid}/moves *   X
-/games/{gid}/notification        X
+/games/{gid}/events              X
 /users                           X   X
 /users/{username}                X        *   *
 ================================ === ==== === ======
@@ -324,7 +324,7 @@ Response
 
 TODO
 
-GET /games/{gid}/notification
+GET /games/{gid}/events
 -----------------------------
 
 TODO

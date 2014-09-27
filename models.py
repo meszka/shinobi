@@ -161,12 +161,20 @@ class Game:
         for card in deck:
             redis.rpush(self.key(':deck'), card)
 
-    def current_player_stream(self):
+    def event_stream(self):
+        event_names = {
+            self.key(':current_player_channel'): 'current_player',
+            self.key(':state_channel'): 'state',
+            self.key(':players_channel'): 'players',
+        }
         p = redis.pubsub()
-        p.subscribe(self.key(':current_player_channel'))
+        p.subscribe(event_names)
         for message in p.listen():
             if message['type'] == 'message':
-                yield 'data: {}\n\n'.format(message['data'])
+                data = message['data']
+                channel = message['channel']
+                event = event_names[channel]
+                yield 'event: {}\ndata: {}\n\n'.format(event, data)
 
 
 class Player:

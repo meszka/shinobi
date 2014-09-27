@@ -172,10 +172,10 @@ class HandView(MethodView):
         return jsonify({'hand': hand})
 
 
-class NotificationView(MethodView):
+class EventsView(MethodView):
     def get(self, gid):
         game = Game(gid)
-        return Response(game.current_player_stream(),
+        return Response(game.event_stream(),
                         mimetype='text/event-stream')
 
 
@@ -224,8 +224,8 @@ app.add_url_rule('/games/<int:gid>/players/<int:pid>/moves',
                  view_func=MoveListView.as_view('move_list'))
 app.add_url_rule('/games/<int:gid>/players/<int:pid>/hand',
                  view_func=HandView.as_view('hand'))
-app.add_url_rule('/games/<int:gid>/notification',
-                 view_func=NotificationView.as_view('notification'))
+app.add_url_rule('/games/<int:gid>/events',
+                 view_func=EventsView.as_view('events'))
 app.add_url_rule('/users', view_func=UserListView.as_view('user_list'))
 app.add_url_rule('/users/<username>', view_func=UserView.as_view('user'))
 
