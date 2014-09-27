@@ -49,6 +49,7 @@ app.controller('GamesController', function ($scope, $http) {
 app.controller('GameLobbyController',
                function ($scope, $http, $routeParams, $location) {
     var gid = $routeParams.gid;
+    var events = new EventSource(root + '/games/' + gid + '/events');
 
     var update = function () {
         $http.get(root + '/games/' + gid).success(function (data) {
@@ -76,6 +77,12 @@ app.controller('GameLobbyController',
             });
     };
 
+    events.addEventListener('players', update);
+    events.addEventListener('state', function (event) {
+        if (event.data === 'started') {
+            $location.path('/games/' + gid);
+        }
+    });
     update();
 });
 
@@ -354,7 +361,7 @@ app.controller('GameController',
         update();
     });
 
-    var source = new EventSource(root + '/games/' + gid + '/notification');
+    var source = new EventSource(root + '/games/' + gid + '/events');
     source.onmessage = function (event) {
         console.log(event.data);
         update();
