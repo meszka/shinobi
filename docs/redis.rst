@@ -19,6 +19,17 @@ Games
                       each one of: red | yellow | blue | green | purple | ninja)
     games:{gid}:current_player_channel (pub/sub channel publishing pid of the
                                         current player)
+    games:{gid}:state_channel (pub/sub channel publishing the game state)
+    games:{gid}:players_channel (pub/sub channel publishing join/leave
+                                 operations of players)
+
+Messages published in the ``games:{gid}:players_channel`` channel are JSON data
+with the format::
+
+    { 'operation': <operation>, 'player': <pid> }
+
+Where ``<operation>`` is one of: ``'join' | 'leave'`` and ``<pid>`` is the pid
+of the player.
 
 Players
 -------

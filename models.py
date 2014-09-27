@@ -60,6 +60,7 @@ class Game:
 
     def set_state(self, state):
         redis.hset(self.key(), 'state', state)
+        redis.publish(self.key(':state_channel'), state)
 
     def get_last_pid(self):
         return redis.hget(self.key(), 'last_player')
@@ -98,6 +99,8 @@ class Game:
         player = Player(self.gid, pid)
         player.set_username(user.username)
         redis.rpush(self.key(':players'), pid)
+        event_data = json.dumps({'action': 'join', 'player': pid})
+        redis.publish(self.key(':players_channel'), event_data)
         return player
 
     def get_data(self):
@@ -208,6 +211,8 @@ class Player:
         redis.lrem(game.key(':players'), 0, self.pid)
         redis.delete(self.key(':cards'))
         redis.delete(self.key(':hand'))
+        event_data = json.dumps({'action': 'leave', 'player': pid})
+        redis.publish(self.key(':players_channel'), event_data)
 
     def validate_move(self, move):
         self.validation_setup()
