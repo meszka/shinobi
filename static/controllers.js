@@ -1,5 +1,3 @@
-var root = 'http://localhost:5000';
-
 app.controller('LoginController', function ($scope, $http, $rootScope) {
     $scope.logIn = function () {
         var auth = btoa($scope.user.username + ':' + $scope.user.password);
@@ -16,7 +14,7 @@ app.controller('LoginController', function ($scope, $http, $rootScope) {
                $rootScope.username !== null;
     };
     $scope.create = function () {
-        $http.post(root + '/users', $scope.user).success(function () {
+        $http.post('/users', $scope.user).success(function () {
             $scope.logIn();
         }).error(function (data) {
             if (data.messages !== undefined) {
@@ -27,20 +25,20 @@ app.controller('LoginController', function ($scope, $http, $rootScope) {
 });
 
 app.controller('UsersController', function ($scope, $http) {
-    $http.get(root + '/users').success(function (data) {
+    $http.get('/users').success(function (data) {
         $scope.users = data.users;
     });
 });
 
 app.controller('GamesController', function ($scope, $http) {
     var update = function () {
-        $http.get(root + '/games').success(function (data) {
+        $http.get('/games').success(function (data) {
             $scope.games = data.games;
         });
     };
 
     $scope.createGame = function (game) {
-        $http.post(root + '/games', game).success(update);
+        $http.post('/games', game).success(update);
     };
 
     update();
@@ -49,32 +47,31 @@ app.controller('GamesController', function ($scope, $http) {
 app.controller('GameLobbyController',
                function ($scope, $http, $routeParams, $location, $rootScope) {
     var gid = $routeParams.gid;
-    var events = new EventSource(root + '/games/' + gid + '/events');
+    var events = new EventSource('/games/' + gid + '/events');
 
     var update = function () {
-        $http.get(root + '/games/' + gid).success(function (data) {
+        $http.get('/games/' + gid).success(function (data) {
             $scope.game = data;
         });
-        $http.get(root + '/games/' + gid + '/players').
+        $http.get('/games/' + gid + '/players').
             success(function (data) {
                 $scope.players = data.players;
             });
     };
 
     $scope.kick = function (player) {
-        $http.delete(root + '/games/' + gid + '/players/' + player.pid).
+        $http.delete('/games/' + gid + '/players/' + player.pid).
             success(update);
     };
 
     $scope.join = function () {
-        $http.post(root + '/games/' + gid + '/players').success(update);
+        $http.post('/games/' + gid + '/players').success(update);
     };
 
     $scope.start = function () {
-        $http.put(root + '/games/' + gid, { state: 'started' }).
-            success(function () {
-                $location.path('/games/' + gid);
-            });
+        $http.put('/games/' + gid, { state: 'started' }).success(function () {
+            $location.path('/games/' + gid);
+        });
     };
 
     events.addEventListener('players', update);
@@ -299,7 +296,7 @@ app.controller('GameController',
 
     $scope.clickDone = function () {
         switchState(states.disabled);
-        $http.post(root + '/games/' + gid + '/players/' + myPid + '/moves', move).
+        $http.post('/games/' + gid + '/players/' + myPid + '/moves', move).
             success(function (data) {
                 console.log(data);
                 $scope.messages = data.messages;
@@ -327,12 +324,12 @@ app.controller('GameController',
 
     // TODO: break into init and update (?)
     var update = function () {
-        $http.get(root + '/games/' + gid).success(function (data) {
+        $http.get('/games/' + gid).success(function (data) {
             $scope.game = data;
             if ($scope.game.state == 'setup') {
                 $location.path($location.path() + '/lobby');
             }
-            $http.get(root + '/games/' + gid + '/players').success(function (data) {
+            $http.get('/games/' + gid + '/players').success(function (data) {
                 $scope.players = data.players;
                 data.players.forEach(function (player) {
                     if (player.username === $rootScope.username) {
@@ -346,7 +343,7 @@ app.controller('GameController',
                     }
                 });
                 if (myPid !== undefined) {
-                    $http.get(root + '/games/' + gid + '/players/' + myPid + '/hand').
+                    $http.get('/games/' + gid + '/players/' + myPid + '/hand').
                         success(function (data) {
                             data.hand.sort();
                             $scope.hand = data.hand;
@@ -363,7 +360,7 @@ app.controller('GameController',
         update();
     });
 
-    var source = new EventSource(root + '/games/' + gid + '/events');
+    var source = new EventSource('/games/' + gid + '/events');
     source.onmessage = function (event) {
         console.log(event.data);
         update();
