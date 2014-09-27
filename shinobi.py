@@ -41,8 +41,7 @@ class GameListView(MethodView):
         game_json = request.get_json()
         game = Game.create(user, game_json['name'])
         response_data = game.get_data()
-        return Response(
-                jsonify(response_data), 201,
+        return (jsonify(response_data), 201,
                 {'Location': url_for('game', gid=game.gid)})
 
 
@@ -116,8 +115,7 @@ class PlayerListView(MethodView):
             return jsonify(response_data), 400
         player = game.create_player(user)
         response_data = player.get_data()
-        return Response(
-                jsonify(response_data), 201,
+        return (jsonify(response_data), 201,
                 {'Location': url_for('player', gid=gid, pid=player.pid)})
 
 
@@ -192,8 +190,7 @@ class UserListView(MethodView):
             response_data = {'messages': ['Username already taken']}
             return jsonify(response_data), 400
         response_data = user.get_data()
-        return Response(
-                jsonify(response_data), 201,
+        return (jsonify(response_data), 201,
                 {'Location': url_for('user', username=user.username)})
 
 
