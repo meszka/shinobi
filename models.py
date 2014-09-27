@@ -2,6 +2,7 @@ import redis
 import random
 import collections
 import itertools
+import json
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -219,8 +220,8 @@ class Player:
         redis.lrem(game.key(':players'), 0, self.pid)
         redis.delete(self.key(':cards'))
         redis.delete(self.key(':hand'))
-        event_data = json.dumps({'action': 'leave', 'player': pid})
-        redis.publish(self.key(':players_channel'), event_data)
+        event_data = json.dumps({'action': 'leave', 'player': self.pid})
+        redis.publish(game.key(':players_channel'), event_data)
 
     def validate_move(self, move):
         self.validation_setup()
