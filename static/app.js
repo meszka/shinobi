@@ -11,6 +11,9 @@ app.factory('notifyInterceptor', function($q) {
     var showMessages = function (response) {
             if (response.data.hasOwnProperty('messages')) {
                 response.data.messages.forEach(function (message) {
+                    if (!message) {
+                        return;
+                    }
                     $('.notifications').notify({
                         message: { text: message },
                         type: statusToType(response.status),
