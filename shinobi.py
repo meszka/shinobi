@@ -54,6 +54,9 @@ class GameView(MethodView):
         if not game.exists():
             return '', 404
         game_data = game.get_data()
+        last_pid = game.get_last_pid()
+        if last_pid:
+            game_data['lastPlayer'] = last_pid
         if game_data['state'] == 'started':
             game_data['currentPlayer'] = game.get_current_pid()
         if game_data['state'] == 'ended':
