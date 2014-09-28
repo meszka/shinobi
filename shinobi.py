@@ -136,7 +136,10 @@ class PlayerView(MethodView):
     def delete(self, gid, pid):
         game = Game(gid)
         owner = game.get_owner()
-        if not authorize(request.authorization, owner):
+        player = Player(gid, pid)
+        user = player.get_user()
+        auth = request.authorization
+        if not (authorize(auth, owner) or authorize(auth, user)):
             return auth_response()
         Player(gid, pid).delete()
         return '', 204
