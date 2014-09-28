@@ -264,7 +264,8 @@ Status: 404
 DELETE /games/{gid}/players/{pid}
 ---------------------------------
 
-Removes player from game. Requires authentication (must be game owner).
+Removes player from game. Requires authentication (must be game owner or
+player's user).
 
 Response
 ^^^^^^^^
