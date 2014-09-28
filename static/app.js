@@ -66,7 +66,8 @@ app.config(function($routeProvider, $httpProvider) {
         otherwise({
             redirectTo: '/games'
         });
-
+    $httpProvider.defaults.headers.
+        common['X-Requested-With'] = 'XMLHttpRequest';
     $httpProvider.interceptors.push('authInterceptor');
     $httpProvider.interceptors.push('notifyInterceptor');
 });
