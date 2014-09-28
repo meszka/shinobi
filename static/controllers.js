@@ -16,10 +16,6 @@ app.controller('LoginController', function ($scope, $http, $rootScope) {
     $scope.create = function () {
         $http.post('/users', $scope.user).success(function () {
             $scope.logIn();
-        }).error(function (data) {
-            if (data.messages !== undefined) {
-                alert(data.messages.join("\n"));
-            }
         });
     };
 });
@@ -281,8 +277,6 @@ app.controller('GameController',
 
     var currentState = states.disabled;
 
-    $scope.messages = []
-
     $scope.range = _.range;
 
     $scope.clickStack = function (player, card) {
@@ -330,8 +324,6 @@ app.controller('GameController',
         switchState(states.disabled);
         $http.post('/games/' + gid + '/players/' + myPid + '/moves', move).
             success(function (data) {
-                console.log(data);
-                $scope.messages = data.messages;
                 update();
                 switchState(states.first1);
                 move = {};
