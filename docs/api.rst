@@ -98,6 +98,13 @@ Data of game::
 
 Status: 200
 
+If a player has drawn the last card in the deck (and will have the last turn)
+the data contains an additional ``"lastPlayer"`` property with the pid of this
+player.
+
+If the game state is ``"ended"`` the data contains an additional ``"winners"``
+property with the pids of the winners.
+
 If the game {gid} doesn't exist:
 
 Status: 404
@@ -253,8 +260,8 @@ Player's data::
 
 Status: 200
 
-If the authenticated user is the player's user, the data contains an additional
-"color" property.
+If the authenticated user is the player's user or the game state is
+``"ended"``, the data contains an additional ``"color"`` property.
 
 If the player doesn't exist:
 
