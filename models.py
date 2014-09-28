@@ -64,7 +64,9 @@ class Game:
         redis.publish(self.key(':state_channel'), state)
 
     def get_last_pid(self):
-        return redis.hget(self.key(), 'last_player')
+        pid = redis.hget(self.key(), 'last_player')
+        if pid:
+            return int(pid)
 
     def set_last_pid(self, pid):
         redis.hset(self.key(), 'last_player', pid)
@@ -89,7 +91,7 @@ class Game:
 
     def set_winner_pids(self, pids):
         for pid in pids:
-            redis.rpush(self.key(':winners)', pid))
+            redis.rpush(self.key(':winners'), pid)
 
     def deck_empty(self):
         deck_length = int(redis.llen(self.key(':deck')))
@@ -134,7 +136,9 @@ class Game:
         redis.publish(self.key(':current_player_channel'), next_pid)
 
     def end(self):
-        winners = self.find_winners
+        winners = self.find_winners()
+        for player in winners:
+            player.get_user().increment_score()
         winner_pids = [player.pid for player in winners]
         self.set_winner_pids(winner_pids)
         self.set_state('ended')
@@ -143,11 +147,18 @@ class Game:
         players = self.get_players()
         color_counts = collections.Counter()
         for player in players:
-            for color, count in player.get_cards():
+            for color, count in player.get_cards().items():
                 color_counts[color] += count
+
+        player_colors = [player.get_color() for player in players]
+        for color in color_counts:
+            if color not in player_colors:
+                color_counts[color] = 0
+
         winning_colors = best(color_counts.items())
         colors_to_players = {player.get_color(): player for player in players}
         winners = [colors_to_players[color] for color in winning_colors]
+
         if len(winners) == 1:
             return winners
         else:
