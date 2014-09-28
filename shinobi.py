@@ -154,6 +154,11 @@ class PlayerView(MethodView):
 class MoveListView(MethodView):
     def post(self, gid, pid):
         game = Game(gid)
+        state = game.get_state()
+        if state == 'setup':
+            return jsonify({'messages': ["The game hasn't started yet"]}), 400
+        if state == 'ended':
+            return jsonify({'messages': ['The game has ended']}), 400
         if not game.get_current_pid() == pid:
             return jsonify({'messages': ['It is not your turn']}), 400
         player = Player(gid, pid)
