@@ -48,6 +48,7 @@ app.controller('GameLobbyController',
                function ($scope, $http, $routeParams, $location, $rootScope) {
     var gid = $routeParams.gid;
     var events = new EventSource('/games/' + gid + '/events');
+    var myPid = null;
 
     var update = function () {
         $http.get('/games/' + gid).success(function (data) {
@@ -59,13 +60,32 @@ app.controller('GameLobbyController',
             });
     };
 
+    $scope.joined = false;
+
+    $scope.isOwner = function () {
+        return $scope.game.owner === $rootScope.username;
+    };
+
     $scope.kick = function (player) {
         $http.delete('/games/' + gid + '/players/' + player.pid).
             success(update);
     };
 
     $scope.join = function () {
-        $http.post('/games/' + gid + '/players').success(update);
+        $http.post('/games/' + gid + '/players').success(function (data) {
+            myPid = data.pid;
+            $scope.joined = true;
+            update();
+        });
+    };
+
+    $scope.leave = function () {
+        $http.delete('/games/' + gid + '/players/' + myPid).
+            success(function () {
+                myPid = null;
+                $scope.joined = false;
+                update();
+            });
     };
 
     $scope.start = function () {
