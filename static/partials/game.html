@@ -2,9 +2,12 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div ng-repeat="player in players" id="player-{{player.pid}}" class="col-lg-3 col-md-4 col-sm-6"
-            ng-click="clickPlayer(player)">
-            <h2>Player {{player.pid}}</h3>
+        <div ng-repeat="player in players"
+             id="player-{{player.pid}}"
+             class="col-lg-3 col-md-4 col-sm-6"
+             ng-click="clickPlayer(player)">
+            <h2>{{player.username}}</h2>
+            <h2 show="game.state === 'ended'">Color {{player.color}}</h3>
             <ul class="province">
                 <ul ng-repeat="(card, count) in player.cards" class="stack"
                     ng-click="clickStack(player, card)"
@@ -18,27 +21,37 @@
     </div>
 </div>
 
-<h2>You are player: {{myPid}}</h2>
 <h2>Your color is: {{myColor}}</h2>
-<h2>Current player: {{game.currentPlayer}}</h2>
-<h2 ng-show="myTurn()">It's your turn!</h2>
-<h2>My hand</h2>
-<ul class="hand">
-    <li ng-repeat="card in hand track by $index"
-        id="hand-{{$index}}"
-        class="card {{card}}"
-        ng-click="clickCard(card, $index)"
-        ng-class="{selected: selectedCard($index)}">
-        {{card}}
-    </li>
-</ul>
-<div ng-show="myTurn()">
-    <button ng-show="showNoAttack()" ng-click="clickNoAttack()">No attack</button>
-    <button ng-show="showDone()" ng-click="clickDone()">Done</button>
-    <button ng-click="clickReset()">Reset move</button>
+<div ng-show="game.state === 'ended'">
+    <h2 ng-show="game.state === 'ended'">Winners</h2>
+    <ul>
+        <li ng-repeat="winner in game.winners">{{usernames[winner]}}</li>
+    </ul>
 </div>
-<ul>
-    <li ng-repeat="message in messages track by $index">{{message}}</li>
-</ul>
+<div ng-hide="game.state === 'ended'">
+    <h2 ng-show="game.lastPlayer">
+        {{usernames[game.lastPlayer]}} has drawn the last card and will have the
+        last turn.
+    </h2>
+    <h2>Current player: {{usernames[game.currentPlayer]}}</h2>
+    <h2 ng-show="myTurn()">It's your turn!</h2>
+    <h2>My hand</h2>
+    <ul class="hand">
+        <li ng-repeat="card in hand track by $index"
+            id="hand-{{$index}}"
+            class="card {{card}}"
+            ng-click="clickCard(card, $index)"
+            ng-class="{selected: selectedCard($index)}">
+            {{card}}
+        </li>
+    </ul>
+    <div ng-show="myTurn()">
+        <button ng-show="showNoAttack()" ng-click="clickNoAttack()">
+            No attack
+        </button>
+        <button ng-show="showDone()" ng-click="clickDone()">Done</button>
+        <button ng-click="clickReset()">Reset move</button>
+    </div>
+</div>
 
 <button ng-click="update()">update()</button>

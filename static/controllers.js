@@ -346,6 +346,8 @@ app.controller('GameController',
         return $scope.game && myPid === $scope.game.currentPlayer;
     };
 
+    $scope.usernames = {};
+
     // TODO: break into init and update (?)
     var update = function () {
         $http.get('/games/' + gid).success(function (data) {
@@ -356,6 +358,7 @@ app.controller('GameController',
             $http.get('/games/' + gid + '/players').success(function (data) {
                 $scope.players = data.players;
                 data.players.forEach(function (player) {
+                    $scope.usernames[player.pid] = player.username;
                     if (player.username === $rootScope.username) {
                         myPid = player.pid;
                         $scope.myPid = player.pid;
