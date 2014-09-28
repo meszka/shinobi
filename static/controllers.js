@@ -57,12 +57,21 @@ app.controller('GameLobbyController',
         $http.get('/games/' + gid + '/players').
             success(function (data) {
                 $scope.players = data.players;
+                data.players.forEach(function (player) {
+                    if (player.username === $rootScope.username) {
+                        myPid = player.pid;
+                        $scope.joined = true;
+                    }
+                });
             });
     };
 
     $scope.joined = false;
 
     $scope.isOwner = function () {
+        if (!$scope.game) {
+            return false;
+        }
         return $scope.game.owner === $rootScope.username;
     };
 
@@ -102,6 +111,9 @@ app.controller('GameLobbyController',
             });
         }
     });
+
+    $scope.$on('updateEvent', update);
+
     update();
 });
 
@@ -213,7 +225,7 @@ app.controller('GameController',
             switchState(states.third);
         },
         clickStack: function (player, card) {
-            if (player.pid == myPid) {
+            if (player.pid === myPid) {
                 return;
             }
             selection = { type: 'stack', pid: player.pid, card: card };
@@ -227,7 +239,7 @@ app.controller('GameController',
             this.card = options.card;
         },
         clickPlayer: function (player) {
-            if (player.pid == myPid || player.pid == this.fromPlayer.pid) {
+            if (player.pid === this.fromPlayer.pid) {
                 return;
             }
             move.second = {
@@ -381,8 +393,5 @@ app.controller('GameController',
     });
 
     var source = new EventSource('/games/' + gid + '/events');
-    source.onmessage = function (event) {
-        console.log(event.data);
-        update();
-    };
+    source.addEventListener('current_player', update);
 });
