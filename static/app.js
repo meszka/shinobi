@@ -30,6 +30,21 @@ app.factory('notifyInterceptor', function($q) {
     };
 });
 
+
+app.factory('authInterceptor', function($q) {
+    return {
+        'responseError': function(response) {
+            if (response.status === 401) {
+                $('.notifications').notify({
+                    message: { text: 'Please log in' },
+                    type: 'warning',
+                }).show();
+            }
+            $q.reject(response);
+        },
+    };
+});
+
 app.config(function($routeProvider, $httpProvider) {
     $routeProvider.
         when('/games', {
@@ -51,6 +66,8 @@ app.config(function($routeProvider, $httpProvider) {
         otherwise({
             redirectTo: '/games'
         });
-
+    $httpProvider.defaults.headers.
+        common['X-Requested-With'] = 'XMLHttpRequest';
+    $httpProvider.interceptors.push('authInterceptor');
     $httpProvider.interceptors.push('notifyInterceptor');
 });
