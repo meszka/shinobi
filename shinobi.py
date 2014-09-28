@@ -23,9 +23,12 @@ def authorize(auth, user):
 
 
 def auth_response():
-    return Response(
-            'Please log in', 401,
-            {'WWW-Authenticate': 'Basic realm="Login Required"'})
+    auth_type = 'Basic'
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        auth_type = 'xBasic'
+    headers = {'WWW-Authenticate':
+               '{} realm="Login Required"'.format(auth_type)}
+    return 'Please log in', 401, headers
 
 
 class GameListView(MethodView):
