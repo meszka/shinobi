@@ -1,4 +1,4 @@
-var app = angular.module('Shinobi', ['ngRoute']);
+var app = angular.module('Shinobi', ['ngRoute', 'ngCookies']);
 
 app.factory('notifyInterceptor', function($q) {
     var statusToType = function (status) {

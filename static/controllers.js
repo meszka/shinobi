@@ -1,13 +1,24 @@
-app.controller('LoginController', function ($scope, $http, $rootScope) {
-    $scope.logIn = function () {
-        var auth = btoa($scope.user.username + ':' + $scope.user.password);
+app.controller('LoginController',
+               function ($scope, $http, $rootScope, $cookieStore) {
+    var logInWith = function (credentials) {
+        var auth = btoa(credentials.username + ':' + credentials.password);
         $http.defaults.headers.common.Authorization = 'Basic ' + auth;
-        $rootScope.username = $scope.user.username;
+        $rootScope.username = credentials.username;
+    };
+
+    $scope.logIn = function () {
+        var credentials = {
+            username: $scope.user.username,
+            password: $scope.user.password
+        };
+        $cookieStore.put('credentials', credentials);
+        logInWith(credentials);
         $rootScope.$broadcast('updateEvent');
     };
     $scope.logOut = function () {
         $rootScope.username = undefined;
         $scope.user = {};
+        $cookieStore.remove('credentials');
     };
     $scope.loggedIn = function () {
         return $rootScope.username !== undefined &&
@@ -18,6 +29,11 @@ app.controller('LoginController', function ($scope, $http, $rootScope) {
             $scope.logIn();
         });
     };
+
+    var credentials = $cookieStore.get('credentials');
+    if (credentials) {
+        logInWith(credentials);
+    }
 });
 
 app.controller('UsersController', function ($scope, $http) {
