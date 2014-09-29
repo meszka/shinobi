@@ -315,8 +315,9 @@ class Player:
         if 'ninja' not in self.tmp_hand:
             return False, 'You do not have a ninja card'
         if color not in self.tmp_cards[to_pid]:
-            return False, 'Player {} does not have a {} card' \
-                          .format(to_pid, color)
+            to_username = Player(self.gid, to_pid).get_username()
+            return False, '{} does not have a {} card' \
+                          .format(to_username, color)
         self.tmp_hand.remove('ninja')
         self.tmp_cards[to_pid][color] -= 1
         return True, ''
@@ -328,8 +329,9 @@ class Player:
         if from_pid == self.pid:
             return False, 'You cannot transfer from your own province'
         if self.tmp_cards[from_pid][color] == 0:
-            return False, 'Player {} does not have a {} card' \
-                          .format(from_pid, color)
+            from_username = Player(self.gid, from_pid).get_username()
+            return False, '{} does not have a {} card' \
+                          .format(from_username, color)
         self.tmp_cards[from_pid][color] -= 1
         self.tmp_cards[to_pid][color] += 1
         return True, ''
@@ -340,8 +342,9 @@ class Player:
         if self.can_attack(to_pid, color):
             return True, ''
         else:
-            return False, 'You cannot attack player {} {}' \
-                          .format(to_pid, color)
+            to_username = Player(self.gid, to_pid).get_username()
+            return False, 'You cannot attack {} {}' \
+                          .format(to_username, color)
 
     def validate_no_attack(self):
         if all(not self.can_attack(pid, color)
@@ -397,25 +400,31 @@ class Player:
         to_player = Player(self.gid, to_pid)
         redis.lrem(self.key(':hand'), 1, color)
         redis.hincrby(to_player.key(':cards'), color, 1)
-        return 'deployed {} to {}'.format(color, to_pid)
+        to_username = to_player.get_username()
+        return 'deployed {} to {}'.format(color, to_username)
 
     def ninja(self, color, to_pid):
         to_player = Player(self.gid, to_pid)
         redis.lrem(self.key(':hand'), 1, 'ninja')
         redis.hincrby(to_player.key(':cards'), color, -1)
-        return 'killed {} in {}'.format(color, to_pid)
+        to_username = to_player.get_username()
+        return "killed {} in {}'s province".format(color, to_username)
 
     def transfer(self, color, from_pid, to_pid):
         from_player = Player(self.gid, from_pid)
         to_player = Player(self.gid, to_pid)
         redis.hincrby(from_player.key(':cards'), color, -1)
         redis.hincrby(to_player.key(':cards'), color, 1)
-        return 'transfered {} from {} to {}'.format(color, from_pid, to_pid)
+        from_username = from_player.get_username()
+        to_username = to_player.get_username()
+        return 'transfered {} from {} to {}' \
+               .format(color, from_username, to_username)
 
     def attack(self, color, to_pid):
         to_player = Player(self.gid, to_pid)
         redis.hincrby(to_player.key(':cards'), color, -1)
-        return 'attacked {} in {}'.format(color, to_pid)
+        to_username = to_player.get_username()
+        return "attacked {} in {}'s province".format(color, to_username)
 
     def get_color(self):
         return redis.hget(self.key(), 'color')
