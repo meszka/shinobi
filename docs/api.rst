@@ -335,7 +335,33 @@ TODO
 GET /games/{gid}/events
 -----------------------------
 
-TODO
+Response
+^^^^^^^^
+
+An event stream (Content-Type: text/event-stream) for use with a client
+supporting `HTML5 Server-Sent Events`_::
+
+    event: players
+    data: { "action": "join", "player": 3 }
+
+    event: state
+    data: started
+
+    event: current_player
+    data: 3
+
+Events can be of type: ``players``, ``state`` or ``current_player``.
+
+For events of type ``players`` the data is a JSON object with an ``"action"``
+attribute (one of ``"join" | "leave"``) and a ``"player"`` attribute with the
+pid of a player.
+
+For events of type ``state`` the data is a string describing the new state of
+the game.
+
+For events of type ``current_player`` the data is a player's pid.
+
+.. _HTML5 Server-Sent Events: http://www.w3.org/TR/eventsource/
 
 GET /users
 ----------
