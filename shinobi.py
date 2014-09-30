@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, redirect, url_for, Response
+from flask import request, jsonify, redirect, url_for, Response
 from flask.views import MethodView
 
+from make_json_app import make_json_app
 from models import Game, Player, User
 
-app = Flask(__name__)
+app = make_json_app(__name__)
 
 
 def authenticate(auth):
