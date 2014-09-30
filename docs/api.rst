@@ -15,7 +15,7 @@ URI                              GET POST PUT DELETE
 /games/{gid}/players/{pid}/moves *   X
 /games/{gid}/events              X
 /users                           X   X
-/users/{username}                X        *   *
+/users/{username}                X        *
 ================================ === ==== === ======
 
 Request and response entities are in the JSON format (Content-Type:
@@ -127,6 +127,8 @@ Game object with modifications::
         "owner": "joe",
     }
 
+Only ``"name"`` and ``"state"`` can be modified.
+
 Response
 ^^^^^^^^
 
@@ -229,6 +231,7 @@ The new player's data::
     }
 
 Status: 201
+
 Headers: Location with URI of new player
 
 If unsuccessful:
@@ -369,6 +372,8 @@ supporting `HTML5 Server-Sent Events`_::
     event: current_player
     data: 3
 
+Status: 200
+
 Events can be of type: ``players``, ``state`` or ``current_player``.
 
 For events of type ``players`` the data is a JSON object with an ``"action"``
@@ -398,6 +403,8 @@ The list of users::
         ]
     }
 
+Status: 200
+
 POST /users
 -----------
 
@@ -418,6 +425,7 @@ The new user::
     { "username": "joe", "score": 0 }
 
 Status: 201
+
 Headers: Location with URI of new user
 
 If unsuccesful:
@@ -444,14 +452,29 @@ Status: 200
 
 If user doesn't exist:
 
-Status: 400
+Status: 404
 
 PUT /users/{username}
 ---------------------
 
-TODO
+Request
+^^^^^^^
 
-DELETE /users/{username}
-------------------------
+A user object with modifications::
 
-TODO?
+    {
+        "username": "joe",
+        "score": 5,
+        "password": "VerySecretPassword"
+    }
+
+Only ``"password"`` can be modified.
+
+Response
+^^^^^^^^
+
+Status: 204 if successful
+
+Status: 400 if unsuccessful
+
+Status: 404 if user doesn't exist
