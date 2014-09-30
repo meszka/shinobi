@@ -338,7 +338,18 @@ The third order must be of type "attack" or be null.
 Response
 ^^^^^^^^
 
-TODO
+A list of messages::
+
+    {
+        "messages": [
+            "deployed red to alice",
+            "transfered blue from bob to joe",
+            "attacked green in alice's province"
+        ]
+    }
+
+Status: 200 if successful
+Status: 400 if unsuccessful
 
 GET /games/{gid}/events
 -----------------------------
