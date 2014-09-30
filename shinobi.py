@@ -80,6 +80,10 @@ class GameView(MethodView):
             return '', 204
 
     def delete(self, gid):
+        game = Game(gid)
+        owner = game.get_owner()
+        if not authorize(request.authorization, owner):
+            return auth_response()
         Game(gid).delete()
         return '', 204
 
