@@ -112,15 +112,20 @@ Status: 404
 PUT /games/{gid}
 ----------------
 
-Can be used to change the state of the game to "started". Requires
-authentication (must be game owner).
+Requires authentication (must be game owner). Can be used to change game state
+to ``"started"`` or change the name of the game.
 
 Request
 ^^^^^^^
 
-Game object with "state" property (other properties are ignored)::
+Game object with modifications::
 
-    { "state": "started" }
+    {
+        "gid": 5,
+        "name": "my game",
+        "state": "started",
+        "owner": "joe",
+    }
 
 Response
 ^^^^^^^^
@@ -131,7 +136,7 @@ Status: 204
 
 On failure:
 
-Object with "messages" property::
+A list of messages::
 
     { "messages": ["Game must have at least 3 players"] }
 
@@ -140,7 +145,7 @@ Status: 400
 DELETE /games/{gid}
 ^^^^^^^^^^^^^^^^^^^
 
-Deletes a game. Only for game owner.
+Requires authentication (only game owner).
 
 Response
 ^^^^^^^^
@@ -196,6 +201,7 @@ The list of players for game {gid}::
         ]
     }
 
+Status: 200
 
 POST /games/{gid}/players
 -------------------------
@@ -290,6 +296,8 @@ Response
 List of cards in the player's hand::
 
     { "hand": [ "ninja", "green", "red", "green" ] }
+
+Status: 200
 
 GET /games/{gid}/players/{pid}/moves
 ------------------------------------
