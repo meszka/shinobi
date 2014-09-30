@@ -232,10 +232,17 @@ class UserView(MethodView):
         return jsonify(user.get_data())
 
     def put(self, username):
-        user_data = get_json()
         user = User(username)
-        if user_data.username != user.username:
+        if not user.exists():
+            return '', 404
+        if not authorize(request.authorization, user):
+            return auth_response()
+        user_data = get_json()
+        if user_data['username'] != user.username:
             response_data = {'messages': ['Cannot change username']}
+            return jsonify(response_data), 400
+        if user_data['score'] != user.get_score():
+            response_data = {'messages': ['Cannot change score']}
             return jsonify(response_data), 400
         user.set_password(user_data['password'])
         return '', 204
