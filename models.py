@@ -50,6 +50,9 @@ class Game:
     def get_name(self):
         return redis.hget(self.key(), 'name')
 
+    def set_name(self, name):
+        redis.hset(game.key(), 'name', name)
+
     def get_owner_username(self):
         return redis.hget(self.key(), 'owner')
 

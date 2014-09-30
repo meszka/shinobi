@@ -66,18 +66,30 @@ class GameView(MethodView):
     def put(self, gid):
         game = Game(gid)
         owner = game.get_owner()
+        state = game.get_state()
+        errors = []
         if not authorize(request.authorization, owner):
             return auth_response()
         game_json = request.get_json()
-        if game.get_state() != 'setup':
-            response_data = {'messages': ['Game must be in setup state']}
-            return jsonify(response_data), 400
-        if len(game.get_pids()) < 3:
-            response_data = {'messages': ['Game must have at least 3 players']}
-            return jsonify(response_data), 400
-        if game_json['state'] == 'started':
+        if game_json['gid'] != gid:
+            errors.append('Cannot modify gid')
+        if game_json['owner'] != owner.username:
+            errors.append('Cannot modify owner')
+        if game_json['state'] != state:
+            if game_json['state'] != 'started':
+                errors.append('Cannot change state to {}' \
+                              .format(game_json['state']))
+            if state != 'setup':
+                errors.append('Game must be in setup state')
+            if len(game.get_pids()) < 3:
+                response_data = {'messages':
+                                 ['Game must have at least 3 players']}
+        if errors:
+            return jsonify({'messages': errors}), 400
+        if game_json['state'] == 'started' and state != 'started':
             game.start()
-            return '', 204
+        game.set_name(game_json['name'])
+        return '', 204
 
     def delete(self, gid):
         game = Game(gid)
