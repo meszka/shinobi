@@ -110,7 +110,8 @@ app.controller('GameLobbyController',
     };
 
     $scope.start = function () {
-        $http.put('/games/' + gid, { state: 'started' }).success(function () {
+        $scope.game.state = 'started';
+        $http.put('/games/' + gid, $scope.game).success(function () {
             $location.path('/games/' + gid);
         });
     };
