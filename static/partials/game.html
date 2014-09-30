@@ -7,7 +7,7 @@
              class="col-lg-3 col-md-4 col-sm-6"
              ng-click="clickPlayer(player)">
             <h2>{{player.username}}</h2>
-            <h2 show="game.state === 'ended'">Color {{player.color}}</h3>
+            <h2 ng-show="game.state === 'ended'">Color {{player.color}}</h2>
             <ul class="province">
                 <ul ng-repeat="(card, count) in player.cards" class="stack"
                     ng-click="clickStack(player, card)"
