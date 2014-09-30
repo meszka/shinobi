@@ -12,10 +12,10 @@ URI                              GET POST PUT DELETE
 /games/{gid}/players             X   X
 /games/{gid}/players/{pid}       X            X
 /games/{gid}/players/{pid}/hand  X
-/games/{gid}/players/{pid}/moves *   X
+/games/{gid}/players/{pid}/moves     X
 /games/{gid}/events              X
 /users                           X   X
-/users/{username}                X        *
+/users/{username}                X        X
 ================================ === ==== === ======
 
 Request and response entities are in the JSON format (Content-Type:
@@ -213,7 +213,8 @@ Requires authentication.
 Response
 ^^^^^^^^
 
-If successful:
+If successful
+*************
 
 The new player's data::
 
@@ -234,7 +235,8 @@ Status: 201
 
 Headers: Location with URI of new player
 
-If unsuccessful:
+If unsuccessful
+***************
 
 A list of messages::
 
@@ -302,11 +304,6 @@ List of cards in the player's hand::
 
 Status: 200
 
-GET /games/{gid}/players/{pid}/moves
-------------------------------------
-
-TODO
-
 POST /games/{gid}/players/{pid}/moves
 -------------------------------------
 
@@ -352,6 +349,7 @@ A list of messages::
     }
 
 Status: 200 if successful
+
 Status: 400 if unsuccessful
 
 GET /games/{gid}/events
@@ -418,7 +416,8 @@ A user object with username and password::
 Response
 ^^^^^^^^
 
-If successful:
+If successful
+*************
 
 The new user::
 
@@ -428,7 +427,8 @@ Status: 201
 
 Headers: Location with URI of new user
 
-If unsuccesful:
+If unsuccesful
+**************
 
 List of messages::
 
@@ -442,7 +442,8 @@ GET /users/{username}
 Response
 ^^^^^^^^
 
-If user {username} exists:
+If user {username} exists
+*************************
 
 Data of user::
 
@@ -450,7 +451,8 @@ Data of user::
 
 Status: 200
 
-If user doesn't exist:
+If user doesn't exist
+*********************
 
 Status: 404
 
@@ -473,8 +475,21 @@ Only ``"password"`` can be modified.
 Response
 ^^^^^^^^
 
-Status: 204 if successful
+If successful
+*************
 
-Status: 400 if unsuccessful
+Status: 204
 
-Status: 404 if user doesn't exist
+If unsuccessful
+***************
+
+A list of messages::
+
+    { "meessages": ["Cannot change username"] }
+
+Status: 400
+
+If user doesn't exist
+*********************
+
+Status: 404
