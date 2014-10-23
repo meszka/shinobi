@@ -1,12 +1,15 @@
-import redis
+import os
 import random
 import collections
 import itertools
 import json
+import redis
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-redis = redis.StrictRedis(decode_responses=True)
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+
+redis = redis.StrictRedis(host=REDIS_HOST, decode_responses=True)
 
 
 def best(scores):
