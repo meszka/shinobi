@@ -6,6 +6,8 @@ from models import Game, Player, User
 
 app = make_json_app(__name__)
 
+app.config['DEBUG'] = bool(os.getenv('DEBUG', False))
+app.config['HOST'] = os.getenv('HOST', '127.0.0.1')
 
 def authenticate(auth):
     if not auth:
@@ -265,4 +267,4 @@ app.add_url_rule('/users', view_func=UserListView.as_view('user_list'))
 app.add_url_rule('/users/<username>', view_func=UserView.as_view('user'))
 
 if __name__ == '__main__':
-    app.run(debug=True, threaded=True)
+    app.run(host=app.config['HOST'], threaded=True)
