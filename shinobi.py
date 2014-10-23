@@ -252,6 +252,11 @@ class UserView(MethodView):
         return '', 204
 
 
+@app.route('/')
+def index():
+    return redirect('/static/index.html')
+
+
 app.add_url_rule('/games', view_func=GameListView.as_view('game_list'))
 app.add_url_rule('/games/<int:gid>', view_func=GameView.as_view('game'))
 app.add_url_rule('/games/<int:gid>/players',
