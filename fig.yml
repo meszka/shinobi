@@ -1,0 +1,11 @@
+web:
+    build: .
+    ports:
+        - "5000"
+    links:
+        - redis
+    environment:
+        HOST: 0.0.0.0
+        REDIS_HOST: redis_1
+redis:
+    image: redis
